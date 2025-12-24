@@ -1,23 +1,20 @@
 // functions/api/stats.js
-// VERSI FINAL - FIXED URL & PARAMETERS
+// VERSI FINAL 2.0 - Support Filtering by Placement ID
 
 export async function onRequest(context) {
-  // 1. Ambil API KEY
   const API_KEY = context.env.ADSTERRA_API_KEY;
   if (!API_KEY) {
-    return new Response(JSON.stringify({ 
-      status: 'error', 
-      error: "Sistem Error: API Key belum terbaca di Cloudflare. Silakan Retry Deployment." 
-    }), { status: 500 });
+    return new Response(JSON.stringify({ status: 'error', error: "API Key missing" }), { status: 500 });
   }
 
-  // 2. Ambil parameter dari Frontend
   const url = new URL(context.request.url);
   const startDate = url.searchParams.get("start_date");
-  const endDate = url.searchParams.get("end_date"); // Frontend mengirim 'end_date'
-  const groupBy = url.searchParams.get("group_by") || "date"; 
+  const endDate = url.searchParams.get("end_date");
+  const groupBy = url.searchParams.get("group_by") || "date";
+  
+  // FITUR BARU: Ambil parameter placement_id
+  const placementId = url.searchParams.get("placement_id");
 
-  // Default tanggal jika kosong (7 hari terakhir)
   let finalStart = startDate;
   let finalFinish = endDate;
   
@@ -29,42 +26,31 @@ export async function onRequest(context) {
       finalStart = start.toISOString().split('T')[0];
   }
 
-  // 3. KONSTRUKSI URL ADSTERRA (CORRECTED)
-  // Perbaikan 1: Hapus '/v3' dari URL path
-  // Perbaikan 2: Ubah parameter 'end_date' menjadi 'finish_date' sesuai dokumentasi resmi
-  const adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}`;
+  // Base URL
+  let adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}`;
+  
+  // Jika ada request filter ID, tambahkan ke URL Adsterra
+  // Parameter resmi Adsterra untuk filter adalah 'placement_ids'
+  if (placementId) {
+      adsterraUrl += `&placement_ids=${placementId}`;
+  }
 
   try {
     const response = await fetch(adsterraUrl, {
       method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "X-API-Key": API_KEY
-      }
+      headers: { "Accept": "application/json", "X-API-Key": API_KEY }
     });
 
-    // Cek Status HTTP
-    if (response.status === 401 || response.status === 403) {
-        return new Response(JSON.stringify({ status: 'error', error: "Unauthorized: API Token Salah." }), { status: 401 });
-    }
-
+    if (response.status === 401) return new Response(JSON.stringify({ status: 'error', error: "Unauthorized" }), { status: 401 });
     if (!response.ok) {
         const text = await response.text();
-        // Tampilkan error detail dari Adsterra jika ada
-        return new Response(JSON.stringify({ status: 'error', error: `Adsterra Error (${response.status}): ${text}` }), { status: response.status });
+        return new Response(JSON.stringify({ status: 'error', error: `Adsterra: ${text}` }), { status: response.status });
     }
 
     const data = await response.json();
-    
-    // Sukses
-    return new Response(JSON.stringify(data), {
-      headers: { 
-          "Content-Type": "application/json",
-          "Cache-Control": "public, max-age=600" // Cache 10 menit
-      }
-    });
+    return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } });
 
   } catch (err) {
-    return new Response(JSON.stringify({ status: 'error', error: `Internal Server Error: ${err.message}` }), { status: 500 });
+    return new Response(JSON.stringify({ status: 'error', error: err.message }), { status: 500 });
   }
 }
