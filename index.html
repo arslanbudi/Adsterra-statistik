@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKe Ultimate - Clean View</title>
+    <title>SEKTE TOKe - Adsterra Statistic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -22,27 +22,27 @@
 <body class="min-h-screen p-4 md:p-8" x-data="dashboardApp()">
 
     <!-- Header -->
-    <header class="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+    <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">TOKe ULTIMATE</h1>
-            <p class="text-slate-500 text-xs tracking-widest mt-1">CLEAN ANALYTICS</p>
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SEKTE TOKe</h1>
+            <p class="text-slate-500 text-xs tracking-widest mt-1">ADSTERRA STATISTIC CENTER</p>
         </div>
         <div class="flex gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             <template x-for="d in [1, 7, 30]">
-                <button @click="setRange(d)" :class="range === d ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-5 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
+                <button @click="setRange(d)" :class="range === d ? 'bg-red-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-5 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
         </div>
     </header>
 
-    <!-- Error -->
-    <div x-show="errorMessage" x-cloak class="max-w-5xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded">
+    <!-- Error Message -->
+    <div x-show="errorMessage" x-cloak class="max-w-6xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded">
         <span x-text="errorMessage"></span>
     </div>
 
-    <!-- KPI Summary -->
-    <section class="max-w-5xl mx-auto mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <!-- Summary Cards -->
+    <section class="max-w-6xl mx-auto mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="panel p-5 border-l-4 border-emerald-500">
-            <div class="text-[10px] text-slate-400 uppercase font-bold">Revenue</div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</div>
             <div class="text-3xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
         </div>
         <div class="panel p-5 border-l-4 border-blue-500">
@@ -59,14 +59,14 @@
         </div>
     </section>
 
-    <!-- Main Table (Single View) -->
-    <section class="max-w-5xl mx-auto panel flex flex-col min-h-[600px]">
+    <!-- Main Table -->
+    <section class="max-w-6xl mx-auto panel flex flex-col min-h-[600px]">
         <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <h2 class="font-bold text-cyan-400 text-sm tracking-wide">PLACEMENT PERFORMANCE</h2>
+                <h2 class="font-bold text-orange-400 text-sm tracking-wide">PLACEMENT LIST</h2>
                 <span x-show="loading.placement" class="text-[10px] text-blue-400 animate-pulse bg-blue-900/30 px-2 py-0.5 rounded">Syncing...</span>
             </div>
-            <input type="text" x-model="searchQuery" placeholder="Cari Placement..." class="search-input w-full sm:w-64 px-4 py-2 rounded-lg">
+            <input type="text" x-model="searchQuery" placeholder="Cari Placement / ID..." class="search-input w-full sm:w-64 px-4 py-2 rounded-lg">
         </div>
 
         <div class="overflow-x-auto flex-1">
@@ -87,9 +87,10 @@
                         <template x-data="{ expanded: false }">
                             <tbody class="group border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
                                 
-                                <!-- BARIS UTAMA (Klik untuk Expand) -->
+                                <!-- BARIS UTAMA -->
                                 <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
                                     <td class="px-6 py-4 align-middle">
+                                        <!-- Logic Nama: Tampilkan Nama Map, kalau loading tampilkan ID dulu -->
                                         <div class="font-bold text-slate-100 text-sm mb-1" x-text="getPlacementName(item.placement_id)"></div>
                                         <div class="inline-flex items-center gap-2">
                                             <span class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" x-text="'ID: ' + item.placement_id"></span>
@@ -105,18 +106,18 @@
                                     </td>
                                 </tr>
 
-                                <!-- DETAIL NEGARA (Dropdown) -->
+                                <!-- DETAIL DROPDOWN -->
                                 <tr x-show="expanded" x-transition>
                                     <td colspan="7" class="p-0 bg-slate-900/50 shadow-inner">
-                                        <div class="p-4 pl-8 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
-                                            
+                                        <div class="p-4 pl-10 pr-6 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
                                             <div x-show="isLoadingDetail(item.placement_id)" class="py-4 text-center text-xs text-blue-300">
                                                 <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail negara...
                                             </div>
 
                                             <div x-show="!isLoadingDetail(item.placement_id)">
-                                                <h4 class="text-[10px] uppercase font-bold text-slate-500 mb-2 tracking-widest border-b border-slate-700 pb-1">Detail Breakdown (Country)</h4>
-                                                
+                                                <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-1">
+                                                    <h4 class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Detail Breakdown</h4>
+                                                </div>
                                                 <div class="max-h-60 overflow-y-auto">
                                                     <table class="w-full text-xs">
                                                         <thead class="sticky top-0 bg-slate-900 text-slate-500">
@@ -132,7 +133,8 @@
                                                             <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
                                                                 <tr class="hover:bg-slate-700/50">
                                                                     <td class="py-2 font-bold text-slate-300 flex items-center gap-2">
-                                                                        <span class="bg-slate-700 px-1.5 rounded text-[10px]" x-text="c.country"></span>
+                                                                        <img :src="`https://flagcdn.com/16x12/${c.country.toLowerCase()}.png`" @error="$el.style.display='none'" class="w-4 h-3 opacity-80">
+                                                                        <span x-text="c.country"></span>
                                                                     </td>
                                                                     <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
                                                                     <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
@@ -147,18 +149,24 @@
                                         </div>
                                     </td>
                                 </tr>
-
                             </tbody>
                         </template>
                     </template>
                     
                     <tr x-show="filteredPlacements.length === 0 && !loading.placement">
-                        <td colspan="7" class="p-12 text-center text-slate-500">Tidak ada data placement.</td>
+                        <td colspan="7" class="p-12 text-center text-slate-500">
+                            <div class="mb-2">📭</div>
+                            Tidak ada data placement untuk ditampilkan.
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </section>
+
+    <footer class="text-center text-slate-600 text-[10px] mt-8 mb-4">
+        SEKTE TOKe Systems &copy; 2025
+    </footer>
 
     <script>
         function dashboardApp() {
@@ -172,31 +180,36 @@
                 details: {}, 
                 loadingDetails: {},
 
-                // CLEAN DATA (Fix Number/String/Comma)
+                // MASTER CLEANER: Ubah semua string angka ke Float
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
                         let finalId = item.placement_id || item.id || item.placement || 0;
-                        const parse = (val) => {
-                            if (!val) return 0;
+                        
+                        // PARSE HELPER: Hapus koma, handle string
+                        const p = (val) => {
                             if (typeof val === 'number') return val;
-                            if (typeof val === 'string') return parseFloat(val.replace(/,/g, ''));
+                            if (typeof val === 'string') return parseFloat(val.replace(/,/g, '')) || 0;
                             return 0;
                         };
+
                         return {
                             ...item,
                             placement_id: finalId,
-                            impressions: parse(item.impressions || item.imps || item.views),
-                            clicks: parse(item.clicks),
-                            revenue: parse(item.revenue),
-                            ctr: parse(item.ctr),
-                            cpm: parse(item.cpm)
+                            // Cek KEY Impressions yang mungkin berbeda
+                            impressions: p(item.impressions) || p(item.imps) || p(item.views),
+                            clicks: p(item.clicks),
+                            revenue: p(item.revenue),
+                            ctr: p(item.ctr),
+                            cpm: p(item.cpm)
                         };
                     });
                 },
 
                 get filteredPlacements() {
+                    // JIKA SEARCH KOSONG, TAMPILKAN SEMUA
                     if (this.searchQuery === '') return this.data.placement;
+                    
                     const lowerQuery = this.searchQuery.toLowerCase();
                     return this.data.placement.filter(item => {
                         const name = this.getPlacementName(item.placement_id).toLowerCase();
@@ -220,41 +233,46 @@
                 async fetchAll() {
                     this.errorMessage = null;
                     this.loading.placement = true;
-                    this.details = {}; 
                     const {start, end} = this.getDateParams();
 
                     try {
-                        const [resPlacement, resMeta] = await Promise.all([
-                            fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`),
-                            fetch(`/api/metadata`)
-                        ]);
+                        // 1. Fetch Statistik
+                        const resStat = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`);
+                        const jsonStat = await resStat.json();
+                        
+                        // Error Handling
+                        if (jsonStat.status === 'error') throw new Error(jsonStat.error);
 
-                        const jsonPlacement = await resPlacement.json();
-                        const jsonMeta = await resMeta.json();
+                        // 2. Tampilkan Data Statistik (Walaupun nama belum siap)
+                        this.data.placement = this.cleanData(jsonStat.items).sort((a,b) => b.revenue - a.revenue);
 
-                        if (jsonPlacement.status === 'error') throw new Error(jsonPlacement.error);
+                        // 3. Fetch Metadata Nama (Jalan Paralel, tidak memblokir tabel)
+                        fetch(`/api/metadata`)
+                            .then(res => res.json())
+                            .then(jsonMeta => {
+                                let newMap = {};
+                                if(jsonMeta.placements) {
+                                    jsonMeta.placements.forEach(i => {
+                                        newMap[String(i.id)] = i.domain ? `${i.domain} - ${i.title}` : i.title;
+                                    });
+                                }
+                                if(jsonMeta.domains) {
+                                    jsonMeta.domains.forEach(i => {
+                                        if(!newMap[String(i.id)]) newMap[String(i.id)] = `Direct/Domain: ${i.name}`;
+                                    });
+                                }
+                                this.placementMap = newMap;
+                            })
+                            .catch(err => console.log("Gagal load nama:", err));
 
-                        this.data.placement = this.cleanData(jsonPlacement.items).sort((a,b) => b.revenue - a.revenue);
-
-                        this.placementMap = {};
-                        if(jsonMeta.placements) {
-                            jsonMeta.placements.forEach(item => {
-                                let name = item.domain ? `${item.domain} - ${item.title}` : item.title;
-                                this.placementMap[String(item.id)] = name;
-                            });
-                        }
-                        if(jsonMeta.domains) {
-                            jsonMeta.domains.forEach(item => {
-                                if(!this.placementMap[String(item.id)]) this.placementMap[String(item.id)] = `Domain: ${item.name}`;
-                            });
-                        }
                     } catch (e) {
-                        this.errorMessage = "Error: " + e.message;
+                        this.errorMessage = "Gagal memuat: " + e.message;
                     } finally {
                         this.loading.placement = false;
                     }
                 },
 
+                // DETAIL DROPDOWN
                 isLoadingDetail(id) { return this.loadingDetails[id] === true; },
                 getDetailData(id) { return this.details[id] || []; },
 
