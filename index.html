@@ -1,198 +1,260 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Pro Analytics</title>
+    <title>SEKTE TOKe - Pro Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        /* Dark Theme Professional */
-        body { background-color: #f8fafc; color: #334155; font-family: 'Inter', sans-serif; }
-        .dark-mode body { background-color: #0F172A; color: #cbd5e1; }
-        
-        /* Panel Style */
-        .panel { @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm; }
-        
-        /* Inputs */
-        .form-select, .form-input { 
-            @apply w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-200; 
-        }
-        
-        /* Table */
-        table { width: 100%; border-collapse: collapse; }
-        th { @apply text-left px-4 py-3 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50; }
-        td { @apply px-4 py-3 text-sm border-b border-slate-100 dark:border-slate-700/50; }
-        tr:hover td { @apply bg-slate-50 dark:bg-slate-700/30; }
-        
-        /* Group By Buttons */
-        .btn-group { @apply px-4 py-2 text-xs font-bold border border-slate-300 dark:border-slate-600 uppercase transition-colors; }
-        .btn-group.active { @apply bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600; }
-        .btn-group:not(.active) { @apply bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700; }
-        
-        /* Utilities */
-        [x-cloak] { display: none !important; }
-        .dark-mode .text-slate-700 { color: #cbd5e1; }
-    </style>
     <script>
-        // Auto Dark Mode based on system
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark-mode');
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b', // Custom panel color
+                            900: '#0f172a', // Main bg
+                        }
+                    }
+                }
+            }
         }
     </script>
+    <style>
+        /* Paksa Dark Mode */
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        
+        /* Input Styles seperti Adsterra Dark */
+        .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; display: block; }
+        .ad-input { 
+            width: 100%; 
+            background-color: #1e293b; 
+            border: 1px solid #334155; 
+            color: #f1f5f9; 
+            border-radius: 4px; 
+            padding: 8px 12px; 
+            font-size: 13px; 
+            transition: border-color 0.2s;
+        }
+        .ad-input:focus { outline: none; border-color: #ef4444; } /* Merah Adsterra */
+        
+        /* Tombol Group By */
+        .group-btn {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .group-btn:hover { background-color: #334155; }
+        .group-btn.active { 
+            background-color: rgba(34, 197, 94, 0.1); 
+            color: #4ade80; 
+            border-color: #22c55e; 
+        }
+        
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: right; 
+            padding: 12px 16px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            color: #cbd5e1; 
+            border-bottom: 2px solid #334155;
+            letter-spacing: 0.5px;
+        }
+        th:first-child { text-align: left; }
+        td { 
+            padding: 14px 16px; 
+            font-size: 13px; 
+            border-bottom: 1px solid #1e293b; 
+            color: #94a3b8; 
+            text-align: right;
+        }
+        td:first-child { text-align: left; color: #f8fafc; font-weight: 500; }
+        tr:hover td { background-color: #1e293b; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 transition-colors duration-300" x-data="dashboardApp()">
+<body class="min-h-screen p-6" x-data="dashboardApp()">
 
-    <!-- Top Bar -->
-    <div class="max-w-7xl mx-auto mb-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <span class="text-blue-600">📊</span> SEKTE TOKe
-        </h1>
-        <div class="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            API Status: <span class="text-green-500">CONNECTED</span>
-        </div>
+    <!-- Header Simpel -->
+    <div class="max-w-[1600px] mx-auto mb-8 flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-br from-red-600 to-orange-600 rounded flex items-center justify-center font-bold text-white text-lg">S</div>
+        <h1 class="text-xl font-bold tracking-tight text-white">SEKTE TOKe <span class="text-slate-500 font-normal text-sm ml-2">v3.0 Pro Stats</span></h1>
     </div>
 
-    <!-- ERROR ALERT -->
-    <div x-show="errorMessage" x-cloak class="max-w-7xl mx-auto mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-        <strong>Error:</strong> <span x-text="errorMessage"></span>
-    </div>
-
-    <!-- 1. FILTERS SECTION -->
-    <section class="max-w-7xl mx-auto mb-6 panel p-6">
-        <h2 class="text-sm font-bold mb-4 dark:text-white">Filters</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-[1600px] mx-auto">
+        
+        <!-- 1. FILTERS SECTION (Layout Renggang) -->
+        <div class="mb-8">
+            <h2 class="text-base font-bold text-white mb-4">Filters</h2>
             
-            <!-- Date Range -->
-            <div class="col-span-1">
-                <label class="block text-xs font-bold mb-1 text-slate-500">Date Range</label>
-                <div class="flex gap-2">
-                    <input type="date" x-model="filters.start" class="form-input">
-                    <input type="date" x-model="filters.end" class="form-input">
+            <!-- Grid Filter 4 Kolom -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
+                
+                <!-- Date Range -->
+                <div>
+                    <label class="ad-label">Date range</label>
+                    <div class="flex gap-2">
+                        <input type="date" x-model="filters.start" class="ad-input">
+                        <input type="date" x-model="filters.end" class="ad-input">
+                    </div>
+                </div>
+
+                <!-- Country -->
+                <div>
+                    <label class="ad-label">Country</label>
+                    <select x-model="filters.country" class="ad-input">
+                        <option value="all">All countries</option>
+                        <template x-for="c in countryList" :key="c">
+                            <option :value="c" x-text="c"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Domain -->
+                <div>
+                    <label class="ad-label">Domain *</label>
+                    <select x-model="filters.domain" class="ad-input">
+                        <option value="all">All Domains</option>
+                        <template x-for="d in metadata.domains" :key="d.id">
+                            <option :value="d.id" x-text="d.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Placement -->
+                <div>
+                    <label class="ad-label">Placement</label>
+                    <select x-model="filters.placement" class="ad-input">
+                        <option value="all">All Placements</option>
+                        <template x-for="p in metadata.placements" :key="p.id">
+                            <option :value="p.id" x-text="p.title"></option>
+                        </template>
+                    </select>
                 </div>
             </div>
 
-            <!-- Country -->
-            <div>
-                <label class="block text-xs font-bold mb-1 text-slate-500">Country</label>
-                <select x-model="filters.country" class="form-select">
-                    <option value="all">All countries</option>
-                    <template x-for="code in countryList" :key="code">
-                        <option :value="code" x-text="code"></option>
-                    </template>
-                </select>
-            </div>
-
-            <!-- Domain -->
-            <div>
-                <label class="block text-xs font-bold mb-1 text-slate-500">Domain</label>
-                <select x-model="filters.domain" class="form-select">
-                    <option value="all">All Domains</option>
-                    <template x-for="d in metadata.domains" :key="d.id">
-                        <option :value="d.id" x-text="d.name"></option>
-                    </template>
-                </select>
-            </div>
-
-            <!-- Placement -->
-            <div>
-                <label class="block text-xs font-bold mb-1 text-slate-500">Placement</label>
-                <select x-model="filters.placement" class="form-select">
-                    <option value="all">All Placements</option>
-                    <template x-for="p in metadata.placements" :key="p.id">
-                        <option :value="p.id" x-text="p.title"></option>
-                    </template>
-                </select>
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-4">
+                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded text-sm font-bold shadow-lg transition-all transform active:scale-95">
+                    APPLY
+                </button>
+                <button @click="resetFilters" class="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wide transition">
+                    RESET
+                </button>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="mt-6 flex gap-3">
-            <button @click="fetchStats" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 text-sm font-bold rounded shadow transition">APPLY</button>
-            <button @click="resetFilters" class="text-slate-500 hover:text-slate-800 dark:hover:text-white px-4 py-2 text-sm font-bold transition">RESET</button>
+        <!-- 2. GROUP BY SECTION -->
+        <div class="mb-6">
+            <h2 class="text-sm font-bold text-white mb-3">Group by</h2>
+            <div class="flex flex-wrap gap-[-1px]">
+                <!-- Group Buttons (Menyatu seperti screenshot) -->
+                <button @click="setGroup('date')" :class="groupBy === 'date' ? 'active' : ''" class="group-btn rounded-l-md border-r-0">DATE</button>
+                <button @click="setGroup('domain')" :class="groupBy === 'domain' ? 'active' : ''" class="group-btn border-r-0">DOMAIN</button>
+                <button @click="setGroup('placement')" :class="groupBy === 'placement' ? 'active' : ''" class="group-btn border-r-0">PLACEMENT</button>
+                <button @click="setGroup('country')" :class="groupBy === 'country' ? 'active' : ''" class="group-btn rounded-r-md">COUNTRY</button>
+            </div>
         </div>
-    </section>
 
-    <!-- 2. GROUP BY SECTION -->
-    <section class="max-w-7xl mx-auto mb-4">
-        <h2 class="text-sm font-bold mb-2 dark:text-white">Group by</h2>
-        <div class="flex flex-wrap shadow-sm rounded-md overflow-hidden inline-flex">
-            <button @click="setGroup('date')" :class="groupBy === 'date' ? 'active' : ''" class="btn-group border-r-0 rounded-l">DATE</button>
-            <button @click="setGroup('domain')" :class="groupBy === 'domain' ? 'active' : ''" class="btn-group border-r-0">DOMAIN</button>
-            <button @click="setGroup('placement')" :class="groupBy === 'placement' ? 'active' : ''" class="btn-group border-r-0">PLACEMENT</button>
-            <button @click="setGroup('country')" :class="groupBy === 'country' ? 'active' : ''" class="btn-group rounded-r">COUNTRY</button>
+        <!-- Error Message -->
+        <div x-show="errorMessage" x-cloak class="mb-4 p-3 bg-red-900/30 border border-red-500/50 text-red-200 rounded text-xs font-mono">
+            Error: <span x-text="errorMessage"></span>
         </div>
-    </section>
 
-    <!-- 3. DATA TABLE -->
-    <section class="max-w-7xl mx-auto panel overflow-hidden">
-        <div class="overflow-x-auto">
-            <table>
-                <thead>
-                    <tr>
-                        <!-- Dynamic First Column Header -->
-                        <th x-text="groupBy.toUpperCase()" class="w-1/3"></th>
-                        <th class="text-right dashed-underline" title="Impressions">Impressions</th>
-                        <th class="text-right dashed-underline" title="Clicks">Clicks</th>
-                        <th class="text-right dashed-underline" title="CTR">CTR</th>
-                        <th class="text-right dashed-underline" title="CPM">CPM</th>
-                        <th class="text-right dashed-underline text-slate-800 dark:text-slate-200" title="Revenue">Revenue</th>
-                    </tr>
-                </thead>
-                <tbody class="relative">
-                    <!-- Loading State -->
-                    <tr x-show="loading">
-                        <td colspan="6" class="p-8 text-center">
-                            <div class="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-blue-600 rounded-full"></div>
-                        </td>
-                    </tr>
-
-                    <!-- Data Rows -->
-                    <template x-for="row in tableData" :key="Math.random()">
+        <!-- 3. DATA TABLE -->
+        <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-xl min-h-[400px]">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
                         <tr>
-                            <!-- Dynamic First Column Value -->
-                            <td class="font-medium text-slate-700 dark:text-slate-200">
-                                <span x-text="getLabel(row)"></span>
-                            </td>
-                            <td class="text-right text-slate-500 dark:text-slate-400" x-text="formatNumber(row.impression)"></td>
-                            <td class="text-right text-slate-500 dark:text-slate-400" x-text="formatNumber(row.clicks)"></td>
-                            <td class="text-right text-slate-500 dark:text-slate-400" x-text="formatDecimal(row.ctr) + '%'"></td>
-                            <td class="text-right text-slate-500 dark:text-slate-400" x-text="formatCurrency(row.cpm)"></td>
-                            <td class="text-right font-bold text-slate-800 dark:text-green-400" x-text="formatCurrency(row.revenue)"></td>
+                            <!-- Dynamic First Header -->
+                            <th class="w-1/3" x-text="getHeaderLabel()"></th>
+                            <th>Impressions</th>
+                            <th>Clicks</th>
+                            <th>CTR</th>
+                            <th>CPM</th>
+                            <th style="color: #4ade80;">Revenue</th> <!-- Green Text for Revenue Header -->
                         </tr>
-                    </template>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800">
+                        <!-- Loading State -->
+                        <tr x-show="loading">
+                            <td colspan="6" class="text-center py-10">
+                                <div class="inline-block animate-spin w-6 h-6 border-2 border-slate-500 border-t-white rounded-full"></div>
+                                <p class="text-xs text-slate-500 mt-2">Loading data...</p>
+                            </td>
+                        </tr>
 
-                    <!-- Empty State -->
-                    <tr x-show="!loading && tableData.length === 0">
-                        <td colspan="6" class="p-8 text-center text-slate-400 text-sm">No data found for this period.</td>
-                    </tr>
+                        <!-- Data Loop -->
+                        <template x-for="row in tableData" :key="Math.random()">
+                            <tr>
+                                <!-- Kolom Pertama Dinamis -->
+                                <td>
+                                    <div class="font-medium" x-text="getRowLabel(row)"></div>
+                                </td>
+                                <td x-text="formatNumber(row.impression)"></td>
+                                <td x-text="formatNumber(row.clicks)"></td>
+                                <td class="text-blue-400" x-text="formatDecimal(row.ctr) + '%'"></td>
+                                <td x-text="formatCurrency(row.cpm)"></td>
+                                <td class="font-bold text-white" x-text="formatCurrency(row.revenue)"></td>
+                            </tr>
+                        </template>
 
-                    <!-- TOTAL ROW -->
-                    <tr x-show="tableData.length > 0" class="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600 font-bold">
-                        <td class="text-slate-800 dark:text-white">Total:</td>
-                        <td class="text-right text-slate-800 dark:text-white" x-text="formatNumber(totals.impression)"></td>
-                        <td class="text-right text-slate-800 dark:text-white" x-text="formatNumber(totals.clicks)"></td>
-                        <td class="text-right text-slate-800 dark:text-white" x-text="formatDecimal(totals.ctr) + '%'"></td>
-                        <td class="text-right text-slate-800 dark:text-white" x-text="formatCurrency(totals.cpm)"></td>
-                        <td class="text-right text-slate-800 dark:text-green-400" x-text="formatCurrency(totals.revenue)"></td>
-                    </tr>
-                </tbody>
-            </table>
+                        <!-- Empty State -->
+                        <tr x-show="!loading && tableData.length === 0">
+                            <td colspan="6" class="text-center py-12 text-slate-500 text-sm">
+                                No data available for the selected filters.
+                            </td>
+                        </tr>
+
+                        <!-- Total Row (Footer) -->
+                        <tr x-show="tableData.length > 0" class="bg-slate-800 font-bold border-t-2 border-slate-600">
+                            <td class="text-white">Total:</td>
+                            <td class="text-white" x-text="formatNumber(totals.impression)"></td>
+                            <td class="text-white" x-text="formatNumber(totals.clicks)"></td>
+                            <td class="text-white" x-text="formatDecimal(totals.ctr) + '%'"></td>
+                            <td class="text-white" x-text="formatCurrency(totals.cpm)"></td>
+                            <td class="text-green-400 text-base" x-text="formatCurrency(totals.revenue)"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Mockup (Visual Only) -->
+            <div class="px-4 py-3 border-t border-slate-700 bg-[#0f172a] flex justify-end items-center gap-4 text-xs text-slate-500">
+                <span>Rows per page: <b>All</b></span>
+                <span>1-<span x-text="tableData.length"></span> of <span x-text="tableData.length"></span></span>
+            </div>
         </div>
-    </section>
 
-    <footer class="max-w-7xl mx-auto mt-6 text-center text-xs text-slate-400">
-        &copy; 2025 SEKTE TOKe. Realtime Data from Adsterra V3 API.
-    </footer>
+    </div>
 
     <script>
         function dashboardApp() {
             return {
                 loading: false,
                 errorMessage: null,
-                groupBy: 'date', // Default Group By
+                groupBy: 'date',
                 
-                // Filters State
+                // State Filter
                 filters: {
                     start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
                     end: new Date().toISOString().split('T')[0],
@@ -201,15 +263,15 @@
                     placement: 'all'
                 },
 
-                // Data Store
+                // Data
                 tableData: [],
                 metadata: { domains: [], placements: [] },
                 map: { domains: {}, placements: {} },
                 
-                // List Negara (Bisa ditambah manual atau ambil dari API lain jika mau)
-                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "FR", "GB", "CN", "JP", "RU", "NG", "ZA"],
+                // Static Country List (Bisa ditambah)
+                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU"],
 
-                // Totals
+                // Totals Calculation
                 get totals() {
                     return this.tableData.reduce((acc, row) => {
                         acc.impression += row.impression;
@@ -219,80 +281,67 @@
                     }, { impression: 0, clicks: 0, revenue: 0, ctr: 0, cpm: 0 });
                 },
 
-                // Computed Totals for CTR/CPM
                 init() {
-                    this.fetchMetadata();
-                    this.fetchStats();
-                    
-                    // Watchers untuk menghitung ulang Total CTR/CPM yang benar
+                    // Update CTR & CPM Totals dynamically
                     this.$watch('tableData', () => {
                         const t = this.totals;
                         this.totals.ctr = t.impression > 0 ? (t.clicks / t.impression) * 100 : 0;
                         this.totals.cpm = t.impression > 0 ? (t.revenue / t.impression) * 1000 : 0;
                     });
+                    
+                    this.fetchMetadata();
+                    this.fetchStats();
                 },
 
-                // --- 1. FETCH METADATA (Untuk Dropdown Filter & Labeling) ---
                 async fetchMetadata() {
                     try {
                         const res = await fetch('/api/metadata');
                         const json = await res.json();
-                        
                         this.metadata.domains = json.domains || [];
                         this.metadata.placements = json.placements || [];
-
-                        // Buat Map untuk Labeling Cepat (ID -> Nama)
+                        
+                        // Mapping untuk Label
                         this.metadata.domains.forEach(d => this.map.domains[d.id] = d.name);
                         this.metadata.placements.forEach(p => this.map.placements[p.id] = p.title);
-                        
-                    } catch(e) { console.error("Meta error", e); }
+                    } catch(e) { console.error(e); }
                 },
 
-                // --- 2. FETCH STATISTICS (Main Logic) ---
                 async fetchStats() {
                     this.loading = true;
                     this.errorMessage = null;
                     this.tableData = [];
 
-                    try {
-                        // Buat URL Query
-                        const params = new URLSearchParams({
-                            start_date: this.filters.start,
-                            end_date: this.filters.end,
-                            group_by: this.groupBy,
-                            domain: this.filters.domain,
-                            placement: this.filters.placement,
-                            country: this.filters.country
-                        });
+                    const params = new URLSearchParams({
+                        start_date: this.filters.start,
+                        end_date: this.filters.end,
+                        group_by: this.groupBy,
+                        domain: this.filters.domain,
+                        placement: this.filters.placement,
+                        country: this.filters.country
+                    });
 
+                    try {
                         const res = await fetch(`/api/stats?${params.toString()}`);
-                        
-                        if(!res.ok) throw new Error("Gagal mengambil data. Cek koneksi atau filter.");
+                        if(!res.ok) throw new Error("Gagal mengambil data API.");
                         
                         const json = await res.json();
-                        
-                        // Clean Data & Hitung Manual jika Impression 0
                         this.tableData = this.cleanData(json.items || []);
-
-                    } catch (e) {
+                    } catch(e) {
                         this.errorMessage = e.message;
                     } finally {
                         this.loading = false;
                     }
                 },
 
-                // --- 3. LOGIC PEMBERSIH & KALKULASI ---
                 cleanData(items) {
                     return items.map(item => {
                         const p = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g,'')) : (v || 0);
                         
                         let rev = p(item.revenue);
                         let cpm = p(item.cpm);
-                        
-                        // Cek semua key impression
                         let imp = p(item.impression) || p(item.impressions) || p(item.imps);
                         
-                        // MATH FALLBACK: Jika Impressi 0 tapi ada Revenue & CPM
+                        // Math Fallback untuk Impressi 0
                         if (imp === 0 && cpm > 0 && rev > 0) {
                             imp = Math.round((rev / cpm) * 1000);
                         }
@@ -308,10 +357,9 @@
                     });
                 },
 
-                // --- 4. UI LOGIC ---
                 setGroup(g) {
                     this.groupBy = g;
-                    this.fetchStats(); // Auto refresh saat ganti grup
+                    this.fetchStats();
                 },
 
                 resetFilters() {
@@ -321,19 +369,17 @@
                     this.fetchStats();
                 },
 
-                // Labeling Pintar untuk Kolom Pertama
-                getLabel(row) {
+                // Label Header Kolom Pertama
+                getHeaderLabel() {
+                    return this.groupBy.charAt(0).toUpperCase() + this.groupBy.slice(1);
+                },
+
+                // Label Baris Kolom Pertama
+                getRowLabel(row) {
                     if (this.groupBy === 'date') return row.date;
-                    if (this.groupBy === 'country') {
-                        // Tambah bendera jika group by country
-                        return row.country; // Bisa diimprovisasi dengan img flag
-                    }
-                    if (this.groupBy === 'domain') {
-                        return this.map.domains[row.domain] || 'Domain ID: ' + row.domain;
-                    }
-                    if (this.groupBy === 'placement') {
-                        return this.map.placements[row.placement] || 'Placement ID: ' + (row.placement || row.placement_id);
-                    }
+                    if (this.groupBy === 'country') return row.country;
+                    if (this.groupBy === 'domain') return this.map.domains[row.domain] || row.domain;
+                    if (this.groupBy === 'placement') return this.map.placements[row.placement] || row.placement || row.placement_id;
                     return '-';
                 },
 
