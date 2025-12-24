@@ -18,7 +18,7 @@ export async function onRequest(context) {
       finalStart = start.toISOString().split('T')[0];
   }
 
-  // PERBAIKAN: Hapus '&limit=2000' karena menyebabkan Error 500
+  // URL BERSIH (Tanpa Limit)
   let adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}`;
   
   if (placementId) {
@@ -30,15 +30,9 @@ export async function onRequest(context) {
       headers: { "Accept": "application/json", "X-API-Key": API_KEY }
     });
     
-    // Jika masih error, kita tangkap pesan aslinya
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Adsterra Error (${response.status}): ${errText}`);
-    }
-    
+    if (!response.ok) throw new Error(await response.text());
     const data = await response.json();
     return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
-
   } catch (err) {
     return new Response(JSON.stringify({ status: 'error', error: err.message }), { status: 500 });
   }
