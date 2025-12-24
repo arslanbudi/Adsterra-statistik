@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Adsterra Statistic</title>
+    <title>SEKTE TOKe - Fixed Table</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -17,6 +17,7 @@
         .search-input { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(148, 163, 184, 0.2); color: #fff; font-size: 0.9rem; }
         .search-input:focus { outline: none; border-color: #3b82f6; }
         [x-cloak] { display: none !important; }
+        .debug-area { font-family: monospace; font-size: 11px; background: #000; color: #0f0; padding: 15px; border: 1px solid #333; overflow-x: auto; margin-top: 20px; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8" x-data="dashboardApp()">
@@ -27,10 +28,12 @@
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SEKTE TOKe</h1>
             <p class="text-slate-500 text-xs tracking-widest mt-1">ADSTERRA STATISTIC CENTER</p>
         </div>
-        <div class="flex gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+        <div class="flex items-center gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             <template x-for="d in [1, 7, 30]">
                 <button @click="setRange(d)" :class="range === d ? 'bg-red-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-5 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
+            <!-- Tombol Debug -->
+            <button @click="showDebug = !showDebug" class="ml-2 px-3 py-2 text-xs bg-slate-900 text-slate-500 border border-slate-700 hover:text-white rounded" title="Lihat Data Mentah">🛠️ Cek Data Mentah</button>
         </div>
     </header>
 
@@ -82,85 +85,98 @@
                         <th class="w-10"></th>
                     </tr>
                 </thead>
+                <!-- PERBAIKAN STRUKTUR X-FOR DISINI -->
                 <tbody class="divide-y divide-slate-700/50">
-                    <template x-for="item in filteredPlacements" :key="item.placement_id">
-                        <template x-data="{ expanded: false }">
-                            <tbody class="group border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
-                                
-                                <!-- BARIS UTAMA -->
-                                <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
-                                    <td class="px-6 py-4 align-middle">
-                                        <!-- Logic Nama: Tampilkan Nama Map, kalau loading tampilkan ID dulu -->
-                                        <div class="font-bold text-slate-100 text-sm mb-1" x-text="getPlacementName(item.placement_id)"></div>
-                                        <div class="inline-flex items-center gap-2">
-                                            <span class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" x-text="'ID: ' + item.placement_id"></span>
+                    <template x-for="(item, index) in filteredPlacements" :key="item.placement_id || index">
+                        <!-- Gunakan x-data langsung di tr wrapper -->
+                        <!-- Logika: Klik tr utama -> toggle expanded -> load detail -->
+                        <tbody x-data="{ expanded: false }" class="group border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                            
+                            <!-- PARENT ROW -->
+                            <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="font-bold text-slate-100 text-sm mb-1" x-text="getPlacementName(item.placement_id)"></div>
+                                    <div class="inline-flex items-center gap-2">
+                                        <span class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" x-text="'ID: ' + item.placement_id"></span>
+                                    </div>
+                                </td>
+                                <td class="td-cell text-slate-300" x-text="formatNumber(item.impressions)"></td>
+                                <td class="td-cell text-slate-400" x-text="formatNumber(item.clicks)"></td>
+                                <td class="td-cell text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></td>
+                                <td class="td-cell text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
+                                <td class="td-cell font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
+                                <td class="px-4 text-center text-slate-500">
+                                    <span x-show="!expanded">▼</span><span x-show="expanded" class="text-blue-500">▲</span>
+                                </td>
+                            </tr>
+
+                            <!-- DETAIL DROPDOWN -->
+                            <tr x-show="expanded" style="display: none;">
+                                <td colspan="7" class="p-0 bg-slate-900/50 shadow-inner">
+                                    <div class="p-4 pl-10 pr-6 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
+                                        <div x-show="isLoadingDetail(item.placement_id)" class="py-4 text-center text-xs text-blue-300">
+                                            <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail negara...
                                         </div>
-                                    </td>
-                                    <td class="td-cell text-slate-300" x-text="formatNumber(item.impressions)"></td>
-                                    <td class="td-cell text-slate-400" x-text="formatNumber(item.clicks)"></td>
-                                    <td class="td-cell text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></td>
-                                    <td class="td-cell text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
-                                    <td class="td-cell font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
-                                    <td class="px-4 text-center text-slate-500">
-                                        <span x-show="!expanded">▼</span><span x-show="expanded" class="text-blue-500">▲</span>
-                                    </td>
-                                </tr>
 
-                                <!-- DETAIL DROPDOWN -->
-                                <tr x-show="expanded" x-transition>
-                                    <td colspan="7" class="p-0 bg-slate-900/50 shadow-inner">
-                                        <div class="p-4 pl-10 pr-6 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
-                                            <div x-show="isLoadingDetail(item.placement_id)" class="py-4 text-center text-xs text-blue-300">
-                                                <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail negara...
+                                        <div x-show="!isLoadingDetail(item.placement_id)">
+                                            <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-1">
+                                                <h4 class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Detail Breakdown</h4>
                                             </div>
-
-                                            <div x-show="!isLoadingDetail(item.placement_id)">
-                                                <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-1">
-                                                    <h4 class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Detail Breakdown</h4>
-                                                </div>
-                                                <div class="max-h-60 overflow-y-auto">
-                                                    <table class="w-full text-xs">
-                                                        <thead class="sticky top-0 bg-slate-900 text-slate-500">
-                                                            <tr>
-                                                                <th class="text-left py-2">Country</th>
-                                                                <th class="text-right py-2">Impr</th>
-                                                                <th class="text-right py-2">Clicks</th>
-                                                                <th class="text-right py-2">CTR</th>
-                                                                <th class="text-right py-2">Rev</th>
+                                            <div class="max-h-60 overflow-y-auto">
+                                                <table class="w-full text-xs">
+                                                    <thead class="sticky top-0 bg-slate-900 text-slate-500">
+                                                        <tr>
+                                                            <th class="text-left py-2">Country</th>
+                                                            <th class="text-right py-2">Impr</th>
+                                                            <th class="text-right py-2">Clicks</th>
+                                                            <th class="text-right py-2">CTR</th>
+                                                            <th class="text-right py-2">Rev</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-700/30">
+                                                        <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
+                                                            <tr class="hover:bg-slate-700/50">
+                                                                <td class="py-2 font-bold text-slate-300 flex items-center gap-2">
+                                                                    <img :src="`https://flagcdn.com/16x12/${c.country.toLowerCase()}.png`" @error="$el.style.display='none'" class="w-4 h-3 opacity-80">
+                                                                    <span x-text="c.country"></span>
+                                                                </td>
+                                                                <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
+                                                                <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
+                                                                <td class="py-2 text-right text-blue-400" x-text="c.ctr.toFixed(2)+'%'"></td>
+                                                                <td class="py-2 text-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
                                                             </tr>
-                                                        </thead>
-                                                        <tbody class="divide-y divide-slate-700/30">
-                                                            <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
-                                                                <tr class="hover:bg-slate-700/50">
-                                                                    <td class="py-2 font-bold text-slate-300 flex items-center gap-2">
-                                                                        <img :src="`https://flagcdn.com/16x12/${c.country.toLowerCase()}.png`" @error="$el.style.display='none'" class="w-4 h-3 opacity-80">
-                                                                        <span x-text="c.country"></span>
-                                                                    </td>
-                                                                    <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
-                                                                    <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
-                                                                    <td class="py-2 text-right text-blue-400" x-text="c.ctr.toFixed(2)+'%'"></td>
-                                                                    <td class="py-2 text-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
-                                                                </tr>
-                                                            </template>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                                        </template>
+                                                        <tr x-show="getDetailData(item.placement_id).length === 0">
+                                                            <td colspan="5" class="py-2 text-center text-slate-600 italic">No country data available</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </template>
-                    
+
                     <tr x-show="filteredPlacements.length === 0 && !loading.placement">
                         <td colspan="7" class="p-12 text-center text-slate-500">
                             <div class="mb-2">📭</div>
-                            Tidak ada data placement untuk ditampilkan.
+                            Tidak ada data placement (Data Kosong atau Filter Salah).
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </section>
+
+    <!-- DEBUGGER AREA (Hidden by Default) -->
+    <section x-show="showDebug" class="max-w-6xl mx-auto mb-10">
+        <div class="debug-area">
+            <strong style="color:white; font-size:14px;">🛠️ RAW DATA INSPECTOR (Kirim SS ini jika Impressi 0)</strong>
+            <br><br>
+            <strong>Sample Data Baris Pertama (Mentah dari API):</strong>
+            <pre x-text="JSON.stringify(rawDebugData, null, 2)"></pre>
         </div>
     </section>
 
@@ -175,18 +191,20 @@
                 loading: { placement: false },
                 errorMessage: null,
                 searchQuery: '',
+                showDebug: false,
+                rawDebugData: null, // Untuk menampung sampel data asli
+                
                 data: { placement: [] },
                 placementMap: {},
                 details: {}, 
                 loadingDetails: {},
 
-                // MASTER CLEANER: Ubah semua string angka ke Float
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
                         let finalId = item.placement_id || item.id || item.placement || 0;
                         
-                        // PARSE HELPER: Hapus koma, handle string
+                        // FUNGSI PARSE AMAN
                         const p = (val) => {
                             if (typeof val === 'number') return val;
                             if (typeof val === 'string') return parseFloat(val.replace(/,/g, '')) || 0;
@@ -196,8 +214,8 @@
                         return {
                             ...item,
                             placement_id: finalId,
-                            // Cek KEY Impressions yang mungkin berbeda
-                            impressions: p(item.impressions) || p(item.imps) || p(item.views),
+                            // MENCOBA SEMUA KEMUNGKINAN NAMA KOLOM
+                            impressions: p(item.impressions) || p(item.imps) || p(item.views) || p(item.requests),
                             clicks: p(item.clicks),
                             revenue: p(item.revenue),
                             ctr: p(item.ctr),
@@ -207,9 +225,7 @@
                 },
 
                 get filteredPlacements() {
-                    // JIKA SEARCH KOSONG, TAMPILKAN SEMUA
                     if (this.searchQuery === '') return this.data.placement;
-                    
                     const lowerQuery = this.searchQuery.toLowerCase();
                     return this.data.placement.filter(item => {
                         const name = this.getPlacementName(item.placement_id).toLowerCase();
@@ -236,35 +252,37 @@
                     const {start, end} = this.getDateParams();
 
                     try {
-                        // 1. Fetch Statistik
-                        const resStat = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`);
+                        const [resStat, resMeta] = await Promise.all([
+                            fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`),
+                            fetch(`/api/metadata`)
+                        ]);
+
                         const jsonStat = await resStat.json();
+                        const jsonMeta = await resMeta.json();
                         
-                        // Error Handling
+                        // DEBUG: Simpan data mentah baris pertama untuk diperiksa
+                        if (jsonStat.items && jsonStat.items.length > 0) {
+                            this.rawDebugData = jsonStat.items[0];
+                        } else {
+                            this.rawDebugData = "Data API Kosong / Tidak ada item";
+                        }
+
                         if (jsonStat.status === 'error') throw new Error(jsonStat.error);
 
-                        // 2. Tampilkan Data Statistik (Walaupun nama belum siap)
                         this.data.placement = this.cleanData(jsonStat.items).sort((a,b) => b.revenue - a.revenue);
 
-                        // 3. Fetch Metadata Nama (Jalan Paralel, tidak memblokir tabel)
-                        fetch(`/api/metadata`)
-                            .then(res => res.json())
-                            .then(jsonMeta => {
-                                let newMap = {};
-                                if(jsonMeta.placements) {
-                                    jsonMeta.placements.forEach(i => {
-                                        newMap[String(i.id)] = i.domain ? `${i.domain} - ${i.title}` : i.title;
-                                    });
-                                }
-                                if(jsonMeta.domains) {
-                                    jsonMeta.domains.forEach(i => {
-                                        if(!newMap[String(i.id)]) newMap[String(i.id)] = `Direct/Domain: ${i.name}`;
-                                    });
-                                }
-                                this.placementMap = newMap;
-                            })
-                            .catch(err => console.log("Gagal load nama:", err));
-
+                        this.placementMap = {};
+                        if(jsonMeta.placements) {
+                            jsonMeta.placements.forEach(i => {
+                                let label = i.domain ? `${i.domain} - ${i.title}` : i.title;
+                                this.placementMap[String(i.id)] = label;
+                            });
+                        }
+                        if(jsonMeta.domains) {
+                            jsonMeta.domains.forEach(i => {
+                                if(!this.placementMap[String(i.id)]) this.placementMap[String(i.id)] = `Domain: ${i.name}`;
+                            });
+                        }
                     } catch (e) {
                         this.errorMessage = "Gagal memuat: " + e.message;
                     } finally {
@@ -272,7 +290,6 @@
                     }
                 },
 
-                // DETAIL DROPDOWN
                 isLoadingDetail(id) { return this.loadingDetails[id] === true; },
                 getDetailData(id) { return this.details[id] || []; },
 
