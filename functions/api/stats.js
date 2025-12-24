@@ -29,8 +29,7 @@ export async function onRequest(context) {
   const groupBy = url.searchParams.get("group_by") || "date"; 
 
   // 3. Request ke Adsterra
-  const adsterraUrl = `https://api3.adsterratools.com/v3/publisher/stats.json?start_date=${finalStart}&end_date=${finalEnd}&group_by=${groupBy}`;
-
+const adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&end_date=${finalEnd}&group_by=${groupBy}`;
   try {
     const response = await fetch(adsterraUrl, {
       method: "GET",
