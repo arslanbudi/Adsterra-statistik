@@ -1,16 +1,17 @@
 // functions/api/stats.js
 export async function onRequest(context) {
   const API_KEY = context.env.ADSTERRA_API_KEY;
-  // 1. Validasi Key
-  if (!API_KEY) return new Response(JSON.stringify({ status: 'error', error: "API Key missing" }), { status: 500 });
+  if (!API_KEY) return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
 
   const url = new URL(context.request.url);
   const startDate = url.searchParams.get("start_date");
   const endDate = url.searchParams.get("end_date");
   const groupBy = url.searchParams.get("group_by") || "date";
+  
+  // Ambil ID
   const placementId = url.searchParams.get("placement_id");
 
-  // 2. Default Tanggal
+  // Default Tanggal
   let finalStart = startDate, finalFinish = endDate;
   if(!startDate || !endDate) {
       const end = new Date();
@@ -20,11 +21,10 @@ export async function onRequest(context) {
       finalStart = start.toISOString().split('T')[0];
   }
 
-  // 3. Konstruksi URL (TANPA LIMIT - PENTING!)
   let adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}`;
   
-  // Jika filter placement ID, tambahkan parameternya
-  if (placementId) {
+  // FIX 422: Pastikan ID hanya ditambahkan jika ada isinya
+  if (placementId && placementId !== 'undefined' && placementId !== 'null') {
       adsterraUrl += `&placement_ids=${placementId}`;
   }
 
@@ -33,16 +33,15 @@ export async function onRequest(context) {
       headers: { "Accept": "application/json", "X-API-Key": API_KEY }
     });
     
+    // Jika Error, kembalikan JSON kosong agar frontend tidak crash
     if (!response.ok) {
-        // Tangkap error detail dari Adsterra
-        const errText = await response.text();
-        return new Response(JSON.stringify({ status: 'error', error: `Adsterra (${response.status}): ${errText}` }), { status: response.status });
+        return new Response(JSON.stringify({ items: [] }), { headers: { "Content-Type": "application/json" } });
     }
     
     const data = await response.json();
     return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 
   } catch (err) {
-    return new Response(JSON.stringify({ status: 'error', error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ items: [] }), { status: 200 }); // Fail safe return empty array
   }
 }
