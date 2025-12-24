@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Fixed UI</title>
-    <!-- Tailwind -->
+    <title>SEKTE TOKe - Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         body { background-color: #0F172A; color: #cbd5e1; font-family: sans-serif; }
         .panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; overflow: hidden; }
         
-        /* TABLE FIX - Memastikan kolom tidak tabrakan */
+        /* TABLE STYLING */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: right; padding: 12px; font-size: 11px; text-transform: uppercase; color: #94a3b8; background: #0f172a; }
-        th:first-child { text-align: left; }
-        td { padding: 12px; border-top: 1px solid #334155; font-size: 13px; vertical-align: middle; text-align: right; }
-        td:first-child { text-align: left; }
+        th { text-align: right; padding: 12px; font-size: 11px; text-transform: uppercase; color: #94a3b8; background: #0f172a; border-bottom: 1px solid #334155; }
+        th:first-child { text-align: left; padding-left: 20px; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 13px; vertical-align: middle; text-align: right; }
+        td:first-child { text-align: left; padding-left: 20px; }
         
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
@@ -26,6 +24,9 @@
 
         .search-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px 12px; border-radius: 6px; width: 100%; }
         .search-input:focus { outline: 1px solid #3b82f6; }
+        
+        [x-cloak] { display: none !important; }
+        .debug-box { background: #000; color: #0f0; padding: 10px; margin: 10px; font-family: monospace; font-size: 11px; overflow-x: auto; border: 1px solid #333; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8" x-data="dashboardApp()">
@@ -36,18 +37,19 @@
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SEKTE TOKe</h1>
             <p class="text-xs text-slate-500 tracking-widest">ADSTERRA STATISTIC CENTER</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center">
             <template x-for="d in [1, 7, 30]">
                 <button @click="setRange(d)" 
                         :class="range === d ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'" 
                         class="px-4 py-2 text-xs font-bold rounded transition" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
+            <button @click="showDebug = !showDebug" class="ml-2 text-xs text-slate-500 underline">🛠️ Cek Data Mentah</button>
         </div>
     </div>
 
     <!-- Error Box -->
     <div x-show="errorMessage" class="max-w-6xl mx-auto mb-6 p-4 bg-red-900/50 border border-red-500 text-white rounded text-sm">
-        <span class="font-bold">ERROR:</span> <span x-text="errorMessage"></span>
+        <span class="font-bold">STATUS:</span> <span x-text="errorMessage"></span>
     </div>
 
     <!-- Summary -->
@@ -95,85 +97,78 @@
                         <th style="width: 40px"></th>
                     </tr>
                 </thead>
-                <!-- Menggunakan struktur template standar tanpa tbody grouping yang aneh -->
-                <tbody>
-                    <template x-for="item in filteredPlacements" :key="item.placement_id">
-                        <!-- Kita render 2 baris (TR) untuk setiap item -->
-                        <!-- Baris 1: Data Utama -->
-                         <!-- Baris 2: Detail Dropdown -->
+                
+                <!-- LOOPING DENGAN TEMPLATE OUTSIDE TBODY (FIX TABLE ISSUE) -->
+                <template x-for="item in filteredPlacements" :key="item.placement_id">
+                    <tbody x-data="{ expanded: false }" class="hover:bg-slate-800/30 transition-colors">
                         
-                         <!-- Karena x-for Alpine tidak bisa return multiple root elements tanpa template tag, kita gunakan trik ini: -->
-                        <template x-data="{ expanded: false }">
-                            <React.Fragment> <!-- Virtual wrapper (konsep) -->
-                                <tr class="hover:bg-slate-800/50 cursor-pointer transition-colors" @click="expanded = !expanded; if(expanded) loadDetail(item)">
-                                    <td>
-                                        <div class="font-bold text-slate-100 text-sm" x-text="getPlacementName(item.placement_id)"></div>
-                                        <span class="text-[10px] text-slate-500 font-mono bg-slate-900 px-1 rounded" x-text="'ID: ' + item.placement_id"></span>
-                                    </td>
-                                    <td class="text-slate-300" x-text="formatNumber(item.impressions)"></td>
-                                    <td class="text-slate-400" x-text="formatNumber(item.clicks)"></td>
-                                    <td class="text-blue-400" x-text="formatDecimal(item.ctr) + '%'"></td>
-                                    <td class="text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
-                                    <td class="font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
-                                    <td class="text-center text-slate-500">
-                                        <span x-show="!expanded">▼</span>
-                                        <span x-show="expanded" class="text-blue-500">▲</span>
-                                    </td>
-                                </tr>
+                        <!-- BARIS UTAMA -->
+                        <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
+                            <td>
+                                <div class="font-bold text-slate-100 text-sm" x-text="getPlacementName(item.placement_id)"></div>
+                                <span class="text-[10px] text-slate-500 font-mono bg-slate-900 px-1 rounded" x-text="'ID: ' + item.placement_id"></span>
+                            </td>
+                            <td class="text-slate-300" x-text="formatNumber(item.impressions)"></td>
+                            <td class="text-slate-400" x-text="formatNumber(item.clicks)"></td>
+                            <td class="text-blue-400" x-text="formatDecimal(item.ctr) + '%'"></td>
+                            <td class="text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
+                            <td class="font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
+                            <td class="text-center text-slate-500">
+                                <span x-show="!expanded">▼</span>
+                                <span x-show="expanded" class="text-blue-500">▲</span>
+                            </td>
+                        </tr>
 
-                                <!-- Baris Detail (Dropdown) -->
-                                <tr x-show="expanded" style="background-color: #0b1120;">
-                                    <td colspan="7" style="padding: 0;">
-                                        <div class="p-4 border-l-4 border-blue-600 m-2 bg-slate-800/30 rounded">
-                                            
-                                            <!-- Loading -->
-                                            <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-2 text-xs text-blue-300">
-                                                <span class="animate-spin inline-block mr-2">⟳</span> Mengambil data negara...
-                                            </div>
+                        <!-- BARIS DETAIL (DROPDOWN) -->
+                        <tr x-show="expanded" style="background-color: #0b1120;">
+                            <td colspan="7" style="padding: 0;">
+                                <div class="p-4 border-l-4 border-blue-600 m-2 bg-slate-800/30 rounded">
+                                    
+                                    <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-2 text-xs text-blue-300">
+                                        <span class="animate-spin inline-block mr-2">⟳</span> Mengambil data negara...
+                                    </div>
 
-                                            <!-- Data Detail -->
-                                            <div x-show="!isLoadingDetail(item.placement_id)">
-                                                <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Detail Breakdown (Country)</div>
-                                                
-                                                <div class="max-h-60 overflow-y-auto">
-                                                    <table style="background: transparent;">
-                                                        <thead>
-                                                            <tr>
-                                                                <th style="background:transparent; color:#64748b; padding-left:0;">Country</th>
-                                                                <th style="background:transparent; color:#64748b;">Impr</th>
-                                                                <th style="background:transparent; color:#64748b;">Clicks</th>
-                                                                <th style="background:transparent; color:#64748b;">CTR</th>
-                                                                <th style="background:transparent; color:#64748b;">Rev</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
-                                                                <tr class="hover:bg-slate-700/50">
-                                                                    <td style="padding-left:0; font-weight:bold; color:#e2e8f0;">
-                                                                        <span x-text="c.country"></span>
-                                                                    </td>
-                                                                    <td class="text-slate-400" x-text="formatNumber(c.impressions)"></td>
-                                                                    <td class="text-slate-500" x-text="formatNumber(c.clicks)"></td>
-                                                                    <td class="text-blue-400" x-text="formatDecimal(c.ctr)+'%'"></td>
-                                                                    <td class="font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
-                                                                </tr>
-                                                            </template>
-                                                             <tr x-show="getDetailData(item.placement_id).length === 0">
-                                                                <td colspan="5" class="text-center text-slate-500 py-4">Tidak ada data negara.</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-
+                                    <div x-show="!isLoadingDetail(item.placement_id)">
+                                        <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Detail Breakdown</div>
+                                        <div class="max-h-60 overflow-y-auto">
+                                            <table style="background: transparent;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="background:transparent; color:#64748b; padding-left:0;">Country</th>
+                                                        <th style="background:transparent; color:#64748b;">Impr</th>
+                                                        <th style="background:transparent; color:#64748b;">Clicks</th>
+                                                        <th style="background:transparent; color:#64748b;">CTR</th>
+                                                        <th style="background:transparent; color:#64748b;">Rev</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
+                                                        <tr class="hover:bg-slate-700/50">
+                                                            <td style="padding-left:0; font-weight:bold; color:#e2e8f0;">
+                                                                <span x-text="c.country"></span>
+                                                            </td>
+                                                            <td class="text-slate-400" x-text="formatNumber(c.impressions)"></td>
+                                                            <td class="text-slate-500" x-text="formatNumber(c.clicks)"></td>
+                                                            <td class="text-blue-400" x-text="formatDecimal(c.ctr)+'%'"></td>
+                                                            <td class="font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
+                                                        </tr>
+                                                    </template>
+                                                    <tr x-show="getDetailData(item.placement_id).length === 0">
+                                                        <td colspan="5" class="text-center text-slate-500 py-4">No Data</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    </td>
-                                </tr>
-                            </React.Fragment>
-                        </template>
-                    </template>
-                    
-                    <tr x-show="filteredPlacements.length === 0 && !loading.placement">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </template>
+
+                <!-- JIKA KOSONG -->
+                <tbody x-show="filteredPlacements.length === 0 && !loading.placement">
+                    <tr>
                         <td colspan="7" class="p-8 text-center text-slate-500">
                             Tidak ada data placement ditemukan.
                         </td>
@@ -183,7 +178,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIC -->
+    <!-- AREA DEBUG (Hanya Muncul Jika Diklik) -->
+    <div x-show="showDebug" class="max-w-6xl mx-auto mt-4">
+        <div class="debug-box">
+            <strong>RAW DATA SAMPLE (Kirim Screenshot ini jika Impressi 0):</strong>
+            <pre x-text="JSON.stringify(rawSample, null, 2)"></pre>
+        </div>
+    </div>
+
     <script>
         function dashboardApp() {
             return {
@@ -191,13 +193,15 @@
                 loading: { placement: false },
                 errorMessage: null,
                 searchQuery: '',
-                
+                showDebug: false,
+                rawSample: null, // Untuk debugging
+
                 data: { placement: [] },
                 placementMap: {},
                 details: {}, 
                 loadingDetails: {},
 
-                // CLEAN DATA
+                // MASTER CLEANER
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
@@ -256,6 +260,13 @@
                         const jsonStat = await resStat.json();
                         const jsonMeta = await resMeta.json();
 
+                        // DEBUG: Simpan sample data
+                        if(jsonStat.items && jsonStat.items.length > 0) {
+                            this.rawSample = jsonStat.items[0];
+                        } else {
+                            this.rawSample = "DATA API KOSONG";
+                        }
+
                         if (jsonStat.status === 'error') throw new Error(jsonStat.error);
 
                         this.data.placement = this.cleanData(jsonStat.items).sort((a,b) => b.revenue - a.revenue);
@@ -272,9 +283,8 @@
                                 if(!this.placementMap[String(i.id)]) this.placementMap[String(i.id)] = `Domain: ${i.name}`;
                             });
                         }
-
                     } catch (e) {
-                        this.errorMessage = "Gagal memuat: " + e.message + ". Cek apakah Backend stats.js sudah diupdate (Hapus limit).";
+                        this.errorMessage = "Gagal memuat: " + e.message;
                     } finally {
                         this.loading.placement = false;
                     }
@@ -292,17 +302,10 @@
 
                     try {
                         const res = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=country&placement_id=${id}`);
-                        
-                        // CEK ERROR DISINI
-                        if(!res.ok) throw new Error("Backend Error 500. Pastikan stats.js sudah diperbaiki (hapus limit).");
-                        
                         const json = await res.json();
                         this.details[id] = this.cleanData(json.items).sort((a,b) => b.revenue - a.revenue);
-                    } catch (e) {
-                        alert("Gagal ambil detail: " + e.message);
-                    } finally {
-                        this.loadingDetails[id] = false;
-                    }
+                    } catch (e) { console.error(e); } 
+                    finally { this.loadingDetails[id] = false; }
                 },
 
                 getDateParams() {
