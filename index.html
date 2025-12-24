@@ -3,178 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Exact Name</title>
+    <title>SEKTE TOKe - Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
-                    }
-                }
-            }
-        }
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { dark: { 900: '#0f172a', 800: '#1e293b' } } } } }
     </script>
     <style>
         body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
-        
-        .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; display: block; }
-        .ad-input { 
-            width: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; 
-            border-radius: 4px; padding: 10px 12px; font-size: 13px; appearance: none; 
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
-        }
-        input[type="date"] { color-scheme: dark; }
-        .ad-input:focus { outline: none; border-color: #ef4444; }
-        
-        .group-btn {
-            background-color: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 20px; 
-            font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
-        }
-        .group-btn:hover { background-color: #334155; color: white; }
-        .group-btn.active { background-color: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: #22c55e; z-index: 10; }
+        .ad-input { width: 100%; background-color: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 4px; font-size: 13px; }
+        .group-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 16px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .group-btn.active { background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: #22c55e; }
         
         table { width: 100%; border-collapse: collapse; }
-        th { 
-            text-align: right; padding: 12px 16px; font-size: 11px; font-weight: 700; 
-            text-transform: uppercase; color: #cbd5e1; border-bottom: 2px solid #334155; 
-        }
+        th { text-align: right; padding: 12px; font-size: 11px; font-weight: bold; color: #94a3b8; border-bottom: 2px solid #334155; text-transform: uppercase; }
         th:first-child { text-align: left; }
-        td { 
-            padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #1e293b; 
-            color: #94a3b8; text-align: right; 
-        }
-        /* Style Nama Placement */
-        td:first-child { 
-            text-align: left; color: #f8fafc; font-weight: 500; 
-            white-space: normal; word-break: break-word;
-        }
+        td { padding: 12px; border-bottom: 1px solid #1e293b; text-align: right; font-size: 13px; }
+        td:first-child { text-align: left; color: #f8fafc; font-weight: 500; }
         tr:hover td { background-color: #1e293b; }
-
         [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen p-6" x-data="dashboardApp()">
 
+    <!-- Header -->
     <div class="max-w-[1600px] mx-auto mb-8 flex items-center gap-3">
         <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white text-lg">S</div>
         <h1 class="text-xl font-bold text-white">SEKTE TOKe <span class="text-slate-500 font-normal text-sm ml-2">Pro Stats</span></h1>
     </div>
 
     <div class="max-w-[1600px] mx-auto">
-        
         <!-- FILTERS -->
-        <div class="mb-10">
-            <h2 class="text-base font-bold text-white mb-6 border-b border-slate-800 pb-2">Filters</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-6">
-                <!-- Date -->
-                <div>
-                    <label class="ad-label">Date range</label>
-                    <div class="flex gap-2">
-                        <input type="date" x-model="filters.start" class="ad-input" style="background-image: none;">
-                        <input type="date" x-model="filters.end" class="ad-input" style="background-image: none;">
-                    </div>
-                </div>
-                <!-- Country -->
-                <div>
-                    <label class="ad-label">Country</label>
-                    <select x-model="filters.country" class="ad-input">
-                        <option value="all">All countries</option>
-                        <template x-for="c in countryList" :key="c">
-                            <option :value="c" x-text="c"></option>
-                        </template>
-                    </select>
-                </div>
-                <!-- Domain -->
-                <div>
-                    <label class="ad-label">Domain *</label>
-                    <select x-model="filters.domain" class="ad-input">
-                        <option value="all">All Domains</option>
-                        <template x-for="d in metadata.domains" :key="d.id">
-                            <option :value="d.id" x-text="d.name"></option>
-                        </template>
-                    </select>
-                </div>
-                <!-- Placement -->
-                <div>
-                    <label class="ad-label">Placement</label>
-                    <select x-model="filters.placement" class="ad-input">
-                        <option value="all">All Placements</option>
-                        <template x-for="p in metadata.placements" :key="p.id">
-                            <option :value="p.id" x-text="map.placements[p.id]"></option>
-                        </template>
-                    </select>
-                </div>
+        <div class="mb-8 p-6 bg-[#151f32] border border-slate-700 rounded-lg">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                <div><label class="text-xs text-slate-400 font-bold block mb-2">Date Range</label><div class="flex gap-2"><input type="date" x-model="filters.start" class="ad-input" style="color-scheme:dark"><input type="date" x-model="filters.end" class="ad-input" style="color-scheme:dark"></div></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-2">Country</label><select x-model="filters.country" class="ad-input"><option value="all">All countries</option><template x-for="c in countryList"><option :value="c" x-text="c"></option></template></select></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-2">Domain</label><select x-model="filters.domain" class="ad-input"><option value="all">All Domains</option><template x-for="d in metadata.domains"><option :value="d.id" x-text="d.name"></option></template></select></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-2">Placement</label><select x-model="filters.placement" class="ad-input"><option value="all">All Placements</option><template x-for="p in metadata.placements"><option :value="p.id" x-text="map.placements[p.id]"></option></template></select></div>
             </div>
-
-            <!-- Buttons -->
-            <div class="flex items-center gap-4">
-                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded text-xs font-bold uppercase tracking-wide shadow transition">APPLY</button>
-                <button @click="resetFilters" class="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wide transition">RESET</button>
-            </div>
+            <div class="flex gap-4"><button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-2 rounded text-xs font-bold uppercase shadow">APPLY</button><button @click="resetFilters" class="text-slate-500 hover:text-white text-xs font-bold uppercase">RESET</button></div>
         </div>
 
         <!-- GROUP BY -->
-        <div class="mb-8">
-            <h2 class="text-sm font-bold text-white mb-4">Group by</h2>
-            <div class="flex flex-wrap shadow-sm">
-                <button @click="setGroup('date')" :class="groupBy === 'date' ? 'active' : ''" class="group-btn rounded-l">DATE</button>
-                <button @click="setGroup('domain')" :class="groupBy === 'domain' ? 'active' : ''" class="group-btn border-l-0">DOMAIN</button>
-                <button @click="setGroup('placement')" :class="groupBy === 'placement' ? 'active' : ''" class="group-btn border-l-0">PLACEMENT</button>
-                <button @click="setGroup('country')" :class="groupBy === 'country' ? 'active' : ''" class="group-btn border-l-0 rounded-r">COUNTRY</button>
-            </div>
-        </div>
+        <div class="mb-6 flex gap-0"><button @click="setGroup('date')" :class="groupBy==='date'?'active':''" class="group-btn rounded-l">DATE</button><button @click="setGroup('domain')" :class="groupBy==='domain'?'active':''" class="group-btn border-l-0">DOMAIN</button><button @click="setGroup('placement')" :class="groupBy==='placement'?'active':''" class="group-btn border-l-0">PLACEMENT</button><button @click="setGroup('country')" :class="groupBy==='country'?'active':''" class="group-btn border-l-0 rounded-r">COUNTRY</button></div>
 
         <!-- TABLE -->
-        <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-2xl min-h-[400px]">
+        <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-xl min-h-[400px]">
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead>
-                        <tr>
-                            <th class="w-[45%]" x-text="getHeaderLabel()"></th>
-                            <th>Impressions</th>
-                            <th>Clicks</th>
-                            <th>CTR</th>
-                            <th>CPM</th>
-                            <th style="color: #4ade80;">Revenue</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th class="w-[45%]" x-text="groupBy.toUpperCase()"></th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>CPM</th><th style="color:#4ade80">Revenue</th></tr></thead>
                     <tbody class="divide-y divide-slate-800">
-                        <tr x-show="loading">
-                            <td colspan="6" class="text-center py-16">
-                                <div class="inline-block animate-spin w-6 h-6 border-2 border-slate-500 border-t-white rounded-full"></div>
-                            </td>
-                        </tr>
-
+                        <tr x-show="loading"><td colspan="6" class="text-center py-16"><div class="inline-block animate-spin w-6 h-6 border-2 border-slate-500 border-t-white rounded-full"></div></td></tr>
                         <template x-for="row in tableData" :key="Math.random()">
-                            <tr>
-                                <td>
-                                    <div class="font-medium text-sm text-slate-200" x-text="getRowLabel(row)"></div>
-                                </td>
-                                <td x-text="formatNumber(row.impression)"></td>
-                                <td x-text="formatNumber(row.clicks)"></td>
-                                <td class="text-blue-400" x-text="formatDecimal(row.ctr) + '%'"></td>
-                                <td x-text="formatCurrency(row.cpm)"></td>
-                                <td class="font-bold text-white" x-text="formatCurrency(row.revenue)"></td>
-                            </tr>
+                            <tr><td><div class="font-medium text-sm text-slate-200" x-text="getRowLabel(row)"></div></td><td x-text="formatNumber(row.impression)"></td><td x-text="formatNumber(row.clicks)"></td><td class="text-blue-400" x-text="formatDecimal(row.ctr)+'%'"></td><td x-text="formatCurrency(row.cpm)"></td><td class="font-bold text-white" x-text="formatCurrency(row.revenue)"></td></tr>
                         </template>
-
-                        <tr x-show="!loading && tableData.length === 0">
-                            <td colspan="6" class="text-center py-16 text-slate-500 text-sm">No data available for selected filters.</td>
-                        </tr>
-
-                        <tr x-show="tableData.length > 0" class="bg-slate-800 font-bold border-t-2 border-slate-600">
-                            <td class="text-white">Total:</td>
-                            <td class="text-white" x-text="formatNumber(totals.impression)"></td>
-                            <td class="text-white" x-text="formatNumber(totals.clicks)"></td>
-                            <td class="text-white" x-text="formatDecimal(totals.ctr) + '%'"></td>
-                            <td class="text-white" x-text="formatCurrency(totals.cpm)"></td>
-                            <td class="text-green-400 text-base" x-text="formatCurrency(totals.revenue)"></td>
-                        </tr>
+                        <tr x-show="!loading && tableData.length===0"><td colspan="6" class="text-center py-16 text-slate-500 text-sm">No data available.</td></tr>
+                        <tr x-show="tableData.length>0" class="bg-slate-800 font-bold border-t-2 border-slate-600"><td class="text-white">Total:</td><td class="text-white" x-text="formatNumber(totals.impression)"></td><td class="text-white" x-text="formatNumber(totals.clicks)"></td><td class="text-white" x-text="formatDecimal(totals.ctr)+'%'"></td><td class="text-white" x-text="formatCurrency(totals.cpm)"></td><td class="text-green-400" x-text="formatCurrency(totals.revenue)"></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -184,167 +68,77 @@
     <script>
         function dashboardApp() {
             return {
-                loading: false,
-                errorMessage: null,
-                groupBy: 'date',
+                loading: false, errorMessage: null, groupBy: 'date',
+                filters: { start: new Date(new Date().setDate(new Date().getDate()-7)).toISOString().split('T')[0], end: new Date().toISOString().split('T')[0], country: 'all', domain: 'all', placement: 'all' },
+                tableData: [], metadata: { domains: [], placements: [] }, map: { domains: {}, placements: {} },
+                countryList: ["US","ID","IN","BR","VN","TH","PH","DE","GB","CA","AU","MY","SG","NG","ZA"],
+
+                get totals() { return this.tableData.reduce((acc, r) => { acc.impression+=r.impression; acc.clicks+=r.clicks; acc.revenue+=r.revenue; return acc; }, {impression:0,clicks:0,revenue:0,ctr:0,cpm:0}); },
                 
-                filters: {
-                    start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
-                    end: new Date().toISOString().split('T')[0],
-                    country: 'all',
-                    domain: 'all',
-                    placement: 'all'
-                },
-
-                tableData: [],
-                metadata: { domains: [], placements: [] },
-                map: { domains: {}, placements: {} },
-                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU", "MY", "SG", "NG"],
-
-                get totals() {
-                    return this.tableData.reduce((acc, row) => {
-                        acc.impression += row.impression;
-                        acc.clicks += row.clicks;
-                        acc.revenue += row.revenue;
-                        return acc;
-                    }, { impression: 0, clicks: 0, revenue: 0, ctr: 0, cpm: 0 });
-                },
-
                 init() {
-                    this.$watch('tableData', () => {
-                        const t = this.totals;
-                        this.totals.ctr = t.impression > 0 ? (t.clicks / t.impression) * 100 : 0;
-                        this.totals.cpm = t.impression > 0 ? (t.revenue / t.impression) * 1000 : 0;
-                    });
-                    this.fetchMetadata();
-                    this.fetchStats();
+                    this.$watch('tableData', () => { const t=this.totals; this.totals.ctr=t.impression>0?(t.clicks/t.impression)*100:0; this.totals.cpm=t.impression>0?(t.revenue/t.impression)*1000:0; });
+                    this.fetchMetadata(); this.fetchStats();
                 },
 
-                // --- 1. LOGIC METADATA (DIPERBAIKI) ---
+                // --- SMART NAMING LOGIC ---
                 async fetchMetadata() {
                     try {
-                        const res = await fetch('/api/metadata');
+                        const res = await fetch('/api/metadata'); // Menggunakan metadata.js (limit 10.000)
                         const json = await res.json();
                         this.metadata.domains = json.domains || [];
                         this.metadata.placements = json.placements || [];
                         
-                        // A. Buat Kamus Domain (ID -> Nama)
-                        // Adsterra Direct Link biasanya punya nama unik di sini, misal "direct-link-904962"
-                        let domainLookup = {};
-                        this.metadata.domains.forEach(d => {
-                            domainLookup[d.id] = d.name; // Contoh: { 904962: "direct-link-904962", 123: "blog.com" }
-                            this.map.domains[d.id] = d.name;
-                        });
+                        let domMap = {};
+                        this.metadata.domains.forEach(d => { domMap[d.id] = d.name; this.map.domains[d.id] = d.name; });
                         
-                        // B. Buat Nama Placement Lengkap
-                        // Format: DomainName – PlacementTitle – PlacementID
                         this.metadata.placements.forEach(p => {
-                            // Cari nama domain induknya
-                            let domainName = "Unknown";
+                            // LOGIKA PINTAR:
+                            // 1. Cari Nama Domain (Direct Link Container)
+                            let dName = "Direct Link";
+                            if (p.domain_id && domMap[p.domain_id]) dName = domMap[p.domain_id];
+                            else if (p.domain && p.domain.name) dName = p.domain.name;
                             
-                            // Cek jika API kasih object domain
-                            if (p.domain && p.domain.name) {
-                                domainName = p.domain.name;
-                            } 
-                            // Cek jika API kasih domain_id, lalu cari di kamus
-                            else if (p.domain_id && domainLookup[p.domain_id]) {
-                                domainName = domainLookup[p.domain_id];
-                            }
-                            // Fallback (jarang terjadi)
-                            else {
-                                domainName = "Direct Link";
-                            }
+                            // 2. Cari Nama Placement (Judul/Alias)
+                            // Prioritaskan 'alias' jika ada, lalu 'title'
+                            let pName = p.alias || p.title || "Unknown";
 
-                            // Format String Akhir: "direct-link-904962 – MoneyMachine – 27576072"
-                            let fullLabel = `${domainName} – ${p.title} – ${p.id}`;
-                            this.map.placements[p.id] = fullLabel;
+                            // Format Adsterra: [Container] - [Placement] - [ID]
+                            this.map.placements[p.id] = `${dName} – ${pName} – ${p.id}`;
                         });
-
                     } catch(e) { console.error(e); }
                 },
 
                 async fetchStats() {
-                    this.loading = true;
-                    this.errorMessage = null;
-                    this.tableData = [];
-
-                    const params = new URLSearchParams({
-                        start_date: this.filters.start,
-                        end_date: this.filters.end,
-                        group_by: this.groupBy,
-                        domain: this.filters.domain,
-                        placement: this.filters.placement,
-                        country: this.filters.country
-                    });
-
+                    this.loading = true; this.tableData = [];
+                    const p = new URLSearchParams({ start_date: this.filters.start, end_date: this.filters.end, group_by: this.groupBy, domain: this.filters.domain, placement: this.filters.placement, country: this.filters.country });
                     try {
-                        const res = await fetch(`/api/stats?${params.toString()}`);
+                        const res = await fetch(`/api/stats?${p.toString()}`);
                         const json = await res.json();
                         this.tableData = this.cleanData(json.items || []);
-                    } catch(e) {
-                        this.errorMessage = e.message;
-                    } finally {
-                        this.loading = false;
-                    }
+                    } catch(e) { } finally { this.loading = false; }
                 },
 
                 cleanData(items) {
                     return items.map(item => {
-                        const p = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g,'')) : (v || 0);
-                        let rev = p(item.revenue);
-                        let cpm = p(item.cpm);
-                        let imp = p(item.impression) || p(item.impressions) || p(item.imps);
-                        
-                        if (imp === 0 && cpm > 0 && rev > 0) {
-                            imp = Math.round((rev / cpm) * 1000);
-                        }
-
-                        return {
-                            ...item,
-                            impression: imp,
-                            clicks: p(item.clicks),
-                            revenue: rev,
-                            ctr: p(item.ctr),
-                            cpm: cpm,
-                            // Simpan ID asli untuk lookup
-                            domain: item.domain,
-                            placement: item.placement || item.placement_id || item.id
-                        };
+                        const v = (val) => typeof val==='string'?parseFloat(val.replace(/,/g,'')):val||0;
+                        let r = v(item.revenue), c = v(item.cpm), i = v(item.impression)||v(item.impressions)||v(item.imps);
+                        if(i===0 && c>0 && r>0) i = Math.round((r/c)*1000); // Math Fix
+                        return { ...item, impression: i, clicks: v(item.clicks), revenue: r, ctr: v(item.ctr), cpm: c, domain: item.domain, placement: item.placement||item.placement_id||item.id };
                     });
                 },
 
-                setGroup(g) {
-                    this.groupBy = g;
-                    this.fetchStats();
-                },
-
-                resetFilters() {
-                    this.filters.country = 'all';
-                    this.filters.domain = 'all';
-                    this.filters.placement = 'all';
-                    this.fetchStats();
-                },
-
-                getHeaderLabel() {
-                    return this.groupBy.charAt(0).toUpperCase() + this.groupBy.slice(1);
-                },
-
+                setGroup(g) { this.groupBy = g; this.fetchStats(); },
+                resetFilters() { this.filters.country='all'; this.filters.domain='all'; this.filters.placement='all'; this.fetchStats(); },
                 getRowLabel(row) {
-                    if (this.groupBy === 'date') return row.date;
-                    if (this.groupBy === 'country') return row.country;
-                    if (this.groupBy === 'domain') return this.map.domains[row.domain] || row.domain;
-                    
-                    if (this.groupBy === 'placement') {
-                        let id = row.placement;
-                        // Ambil nama lengkap yang sudah kita susun di fetchMetadata
-                        return this.map.placements[id] || 'ID: ' + id;
-                    }
+                    if (this.groupBy==='date') return row.date;
+                    if (this.groupBy==='country') return row.country;
+                    if (this.groupBy==='domain') return this.map.domains[row.domain]||row.domain;
+                    if (this.groupBy==='placement') return this.map.placements[row.placement]||'ID: '+row.placement;
                     return '-';
                 },
-
-                formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0); },
-                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val || 0); },
-                formatDecimal(val) { return (val || 0).toFixed(2); }
+                formatCurrency(v) { return new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format(v||0); },
+                formatNumber(v) { return new Intl.NumberFormat('en-US').format(v||0); },
+                formatDecimal(v) { return (v||0).toFixed(2); }
             }
         }
     </script>
