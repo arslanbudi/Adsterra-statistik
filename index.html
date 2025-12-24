@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKe Ultimate - Clean Analytics</title>
+    <title>TOKe Ultimate - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -14,8 +14,8 @@
         .th-cell { @apply px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right whitespace-nowrap; }
         .td-cell { @apply px-4 py-3 text-sm border-t border-slate-700/50 text-right whitespace-nowrap; }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         
@@ -27,14 +27,12 @@
 </head>
 <body class="min-h-screen p-4 md:p-8" x-data="dashboardApp()">
 
-    <!-- Header & Controls -->
-    <header class="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">TOKe ULTIMATE</h1>
-            <p class="text-slate-500 text-xs tracking-widest mt-1">SINGLE VIEW ANALYTICS</p>
+            <p class="text-slate-500 text-xs tracking-widest mt-1">ADVANCED STATS & MAPPING</p>
         </div>
-        
-        <!-- Date Filter -->
         <div class="flex items-center gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             <template x-for="d in [1, 7, 30]">
                 <button @click="setRange(d)" 
@@ -47,23 +45,22 @@
     </header>
 
     <!-- Error Message -->
-    <div x-show="errorMessage" x-cloak class="max-w-5xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded flex items-center gap-3">
-        <span class="text-xl">⚠️</span>
+    <div x-show="errorMessage" x-cloak class="max-w-6xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded flex items-center gap-3">
         <span x-text="errorMessage" class="text-sm"></span>
     </div>
 
-    <!-- KPI Cards (Summary) -->
-    <section class="max-w-5xl mx-auto mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <!-- Summary Cards -->
+    <section class="max-w-6xl mx-auto mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="panel p-5 border-l-4 border-emerald-500">
-            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Revenue</div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Revenue</div>
             <div class="text-3xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
         </div>
         <div class="panel p-5 border-l-4 border-blue-500">
-            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Impressions</div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Impressions</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalImpressions)"></div>
         </div>
         <div class="panel p-5 border-l-4 border-purple-500">
-            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Clicks</div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Clicks</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalClicks)"></div>
         </div>
         <div class="panel p-5 border-l-4 border-yellow-500">
@@ -72,23 +69,19 @@
         </div>
     </section>
 
-    <!-- Main Table Container (Single Column Layout) -->
-    <section class="max-w-5xl mx-auto panel flex flex-col min-h-[600px]">
+    <!-- Main Table -->
+    <section class="max-w-6xl mx-auto panel flex flex-col min-h-[600px]">
         
-        <!-- Table Toolbar -->
         <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <h2 class="font-bold text-cyan-400 text-sm tracking-wide">PLACEMENT BREAKDOWN</h2>
+                <h2 class="font-bold text-cyan-400 text-sm tracking-wide">PERFORMANCE BY PLACEMENT</h2>
                 <span x-show="loading.placement" class="text-[10px] text-blue-400 animate-pulse bg-blue-900/30 px-2 py-0.5 rounded">Syncing...</span>
             </div>
-            <!-- Search Box -->
             <div class="relative w-full sm:w-64">
-                <input type="text" x-model="searchQuery" placeholder="Filter by Name or ID..." class="search-input w-full px-4 py-2 rounded-lg">
-                <div class="absolute right-3 top-2 text-slate-500">🔍</div>
+                <input type="text" x-model="searchQuery" placeholder="Filter Name / ID..." class="search-input w-full px-4 py-2 rounded-lg">
             </div>
         </div>
 
-        <!-- The Table -->
         <div class="overflow-x-auto flex-1">
             <table class="w-full border-collapse text-left">
                 <thead class="bg-slate-900/90 sticky top-0 z-10">
@@ -99,19 +92,18 @@
                         <th class="th-cell text-blue-400">CTR</th>
                         <th class="th-cell text-yellow-500">CPM</th>
                         <th class="th-cell text-emerald-400">Rev</th>
-                        <th class="px-4 py-3 w-10"></th> <!-- Arrow Column -->
+                        <th class="px-4 py-3 w-10"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-700/50">
-                    <!-- Loop Data Placement -->
                     <template x-for="item in filteredPlacements" :key="item.placement_id">
                         <template x-data="{ expanded: false }">
                             <tbody class="group border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
                                 
-                                <!-- BARIS UTAMA (Klik untuk Dropdown) -->
+                                <!-- PARENT ROW -->
                                 <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
                                     <td class="px-6 py-4 align-middle">
-                                        <!-- Nama & ID -->
+                                        <!-- Nama ditampilkan dengan logika Mapping baru -->
                                         <div class="font-bold text-slate-100 text-sm mb-1" x-text="getPlacementName(item.placement_id)"></div>
                                         <div class="inline-flex items-center gap-2">
                                             <span class="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" x-text="'ID: ' + item.placement_id"></span>
@@ -123,55 +115,56 @@
                                     <td class="td-cell text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
                                     <td class="td-cell font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
                                     <td class="px-4 text-center text-slate-500">
-                                        <span x-show="!expanded" class="transform transition-transform duration-200">▼</span>
-                                        <span x-show="expanded" class="text-blue-500 transform rotate-180 inline-block transition-transform duration-200">▼</span>
+                                        <span x-show="!expanded">▼</span>
+                                        <span x-show="expanded" class="text-blue-500">▲</span>
                                     </td>
                                 </tr>
 
-                                <!-- BARIS DROPDOWN (Detail Country) -->
-                                <tr x-show="expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-[-10px]" x-transition:enter-end="opacity-100 translate-y-0">
+                                <!-- DETAIL ROW (SCROLLABLE ACCORDION) -->
+                                <tr x-show="expanded" x-transition>
                                     <td colspan="7" class="p-0 bg-slate-900/50 shadow-inner">
-                                        <div class="p-4 pl-10 pr-6 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
+                                        <div class="p-4 pl-8 border-l-4 border-blue-600 my-2 mr-2 rounded-r-lg bg-slate-800/20">
                                             
-                                            <!-- Loading Indicator -->
-                                            <div x-show="isLoadingDetail(item.placement_id)" class="py-4 text-center text-xs text-blue-300 flex items-center justify-center gap-2">
-                                                <span class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></span>
-                                                Mengambil data negara...
+                                            <div x-show="isLoadingDetail(item.placement_id)" class="py-4 text-center text-xs text-blue-300">
+                                                <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail negara...
                                             </div>
 
-                                            <!-- Tabel Detail Negara -->
                                             <div x-show="!isLoadingDetail(item.placement_id)">
-                                                <h4 class="text-[10px] uppercase font-bold text-slate-500 mb-3 tracking-widest border-b border-slate-700 pb-1">Performance by Country</h4>
+                                                <div class="flex justify-between items-end mb-2 border-b border-slate-700 pb-1">
+                                                    <h4 class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Country Breakdown</h4>
+                                                    <span class="text-[10px] text-slate-600" x-text="getDetailData(item.placement_id).length + ' Countries'"></span>
+                                                </div>
                                                 
-                                                <table class="w-full text-xs">
-                                                    <thead>
-                                                        <tr class="text-slate-500">
-                                                            <th class="text-left pb-2">Country</th>
-                                                            <th class="text-right pb-2">Impr</th>
-                                                            <th class="text-right pb-2">Clicks</th>
-                                                            <th class="text-right pb-2">CTR</th>
-                                                            <th class="text-right pb-2">CPM</th>
-                                                            <th class="text-right pb-2">Revenue</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="divide-y divide-slate-700/30">
-                                                        <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
-                                                            <tr class="hover:bg-slate-700/30 transition-colors">
-                                                                <td class="py-2 font-bold text-slate-200 flex items-center gap-2">
-                                                                    <span class="bg-slate-700 text-slate-300 px-1.5 rounded text-[10px]" x-text="c.country"></span>
-                                                                </td>
-                                                                <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
-                                                                <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
-                                                                <td class="py-2 text-right text-blue-400" x-text="c.ctr.toFixed(2)+'%'"></td>
-                                                                <td class="py-2 text-right text-yellow-700" x-text="formatCurrency(c.cpm)"></td>
-                                                                <td class="py-2 text-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
+                                                <!-- INI SOLUSINYA: MAX HEIGHT + OVERFLOW AUTO -->
+                                                <div class="max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                                    <table class="w-full text-xs">
+                                                        <thead class="sticky top-0 bg-slate-900 text-slate-500">
+                                                            <tr>
+                                                                <th class="text-left py-2">Country</th>
+                                                                <th class="text-right py-2">Imp</th>
+                                                                <th class="text-right py-2">Clicks</th>
+                                                                <th class="text-right py-2">CTR</th>
+                                                                <th class="text-right py-2">Rev</th>
                                                             </tr>
-                                                        </template>
-                                                        <tr x-show="getDetailData(item.placement_id).length === 0">
-                                                            <td colspan="6" class="py-3 text-center text-slate-600 italic">Tidak ada data negara untuk placement ini.</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-slate-700/30">
+                                                            <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
+                                                                <tr class="hover:bg-slate-700/50">
+                                                                    <td class="py-2 font-bold text-slate-200 flex items-center gap-2">
+                                                                        <img :src="`https://flagcdn.com/16x12/${c.country.toLowerCase()}.png`" 
+                                                                             @error="$el.style.display='none'"
+                                                                             class="w-4 h-3 rounded-sm opacity-80" alt="">
+                                                                        <span x-text="c.country"></span>
+                                                                    </td>
+                                                                    <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
+                                                                    <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
+                                                                    <td class="py-2 text-right text-blue-400" x-text="c.ctr.toFixed(2)+'%'"></td>
+                                                                    <td class="py-2 text-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
+                                                                </tr>
+                                                            </template>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -181,62 +174,47 @@
                         </template>
                     </template>
                     
-                    <!-- Empty State -->
                     <tr x-show="filteredPlacements.length === 0 && !loading.placement">
-                        <td colspan="7" class="p-12 text-center text-slate-500">
-                            <div class="text-4xl mb-2">🔍</div>
-                            <p>Tidak ada placement yang cocok dengan pencarian.</p>
-                        </td>
+                        <td colspan="7" class="p-12 text-center text-slate-500">Tidak ada data placement.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <footer class="text-center text-slate-600 text-[10px] mt-8 mb-4">
-        TOKe Ultimate System &copy; 2025. Secure & Encrypted Connection.
-    </footer>
-
     <script>
         function dashboardApp() {
             return {
-                range: 1, // Default Today
+                range: 1, 
                 loading: { placement: false },
                 errorMessage: null,
                 searchQuery: '',
-                
-                // Data Store
-                data: { date: [], placement: [] }, // Country dihilangkan dari global, masuk ke details
+                data: { placement: [] },
                 placementMap: {},
                 details: {}, 
                 loadingDetails: {},
 
-                // --- CLEAN DATA LOGIC ---
+                // --- CLEAN DATA (IMPRESSION FIXER) ---
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
-                        // Normalize ID
                         let finalId = item.placement_id || item.id || item.placement || 0;
-                        // Normalize Metrics (Handle string/null)
+                        
+                        // RADAR: Cek semua kemungkinan key untuk Impression
                         let imp = parseFloat(item.impressions || item.imps || item.views || 0);
-                        let clk = parseFloat(item.clicks || 0);
-                        let rev = parseFloat(item.revenue || 0);
-                        let ctr = parseFloat(item.ctr || 0);
-                        let cpm = parseFloat(item.cpm || 0);
-
+                        
                         return {
                             ...item,
                             placement_id: finalId,
                             impressions: imp,
-                            clicks: clk,
-                            revenue: rev,
-                            ctr: ctr,
-                            cpm: cpm
+                            clicks: parseFloat(item.clicks || 0),
+                            revenue: parseFloat(item.revenue || 0),
+                            ctr: parseFloat(item.ctr || 0),
+                            cpm: parseFloat(item.cpm || 0)
                         };
                     });
                 },
 
-                // Filter Logic
                 get filteredPlacements() {
                     if (this.searchQuery === '') return this.data.placement;
                     const lowerQuery = this.searchQuery.toLowerCase();
@@ -247,7 +225,6 @@
                     });
                 },
 
-                // Totals
                 get totalRevenue() { return this.data.placement.reduce((a, b) => a + b.revenue, 0); },
                 get totalImpressions() { return this.data.placement.reduce((a, b) => a + b.impressions, 0); },
                 get totalClicks() { return this.data.placement.reduce((a, b) => a + b.clicks, 0); },
@@ -257,59 +234,64 @@
                 setRange(d) { this.range = d; this.fetchAll(); },
 
                 getPlacementName(id) {
-                    // Coba string dan number keys
-                    return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'Placement ' + id;
+                    return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'ID: ' + id;
                 },
 
                 async fetchAll() {
                     this.errorMessage = null;
                     this.loading.placement = true;
-                    this.details = {}; // Reset cache dropdown
+                    this.details = {}; 
                     const {start, end} = this.getDateParams();
 
                     try {
-                        // Kita hanya butuh Placement Stats dan Metadata
-                        // Country stats tidak perlu diambil di awal (lazy load via dropdown)
+                        // Request Stats dan Metadata (yang baru)
                         const [resPlacement, resMeta] = await Promise.all([
                             fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`),
-                            fetch(`/api/placements`)
+                            fetch(`/api/metadata`) // Menggunakan endpoint baru yang gabungin placements & domains
                         ]);
 
-                        const [jsonPlacement, jsonMeta] = await Promise.all([
-                            resPlacement.json(), resMeta.json()
-                        ]);
+                        const jsonPlacement = await resPlacement.json();
+                        const jsonMeta = await resMeta.json();
 
                         if (jsonPlacement.status === 'error') throw new Error(jsonPlacement.error);
 
                         this.data.placement = this.cleanData(jsonPlacement.items).sort((a,b) => b.revenue - a.revenue);
 
-                        // Build Map Name
-                        if(jsonMeta.items && Array.isArray(jsonMeta.items)) {
-                            this.placementMap = jsonMeta.items.reduce((acc, item) => {
-                                // Logic Nama: Domain - Title
-                                let fullName = item.title;
-                                if(item.domain) fullName = `${item.domain} - ${item.title}`;
-                                else if(item.url) fullName = `${item.url} - ${item.title}`;
-                                
-                                acc[String(item.id)] = fullName;
-                                return acc;
-                            }, {});
+                        // --- LOGIKA MAPPING BARU (GABUNGAN) ---
+                        this.placementMap = {};
+                        
+                        // 1. Map Placements Biasa
+                        if(jsonMeta.placements && Array.isArray(jsonMeta.placements)) {
+                            jsonMeta.placements.forEach(item => {
+                                let name = item.title;
+                                if(item.domain) name = `${item.domain} - ${item.title}`;
+                                this.placementMap[String(item.id)] = name;
+                            });
+                        }
+                        
+                        // 2. Map Domains (Untuk Direct Link yang ID-nya beda)
+                        if(jsonMeta.domains && Array.isArray(jsonMeta.domains)) {
+                            jsonMeta.domains.forEach(item => {
+                                // Simpan nama domain jika belum ada
+                                if(!this.placementMap[String(item.id)]) {
+                                    this.placementMap[String(item.id)] = `Domain: ${item.name}`;
+                                }
+                            });
                         }
 
                     } catch (e) {
-                        this.errorMessage = "Gagal memuat data: " + e.message;
+                        this.errorMessage = "Gagal memuat: " + e.message;
                     } finally {
                         this.loading.placement = false;
                     }
                 },
 
-                // --- DETAIL DROPDOWN LOGIC ---
                 isLoadingDetail(id) { return this.loadingDetails[id] === true; },
                 getDetailData(id) { return this.details[id] || []; },
 
                 async loadDetail(item) {
                     const id = item.placement_id;
-                    if (this.details[id]) return; // Jika sudah ada di cache, stop.
+                    if (this.details[id]) return;
 
                     this.loadingDetails[id] = true;
                     const {start, end} = this.getDateParams();
@@ -318,11 +300,8 @@
                         const res = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=country&placement_id=${id}`);
                         const json = await res.json();
                         this.details[id] = this.cleanData(json.items).sort((a,b) => b.revenue - a.revenue);
-                    } catch (e) {
-                        console.error(e);
-                    } finally {
-                        this.loadingDetails[id] = false;
-                    }
+                    } catch (e) { console.error(e); } 
+                    finally { this.loadingDetails[id] = false; }
                 },
 
                 getDateParams() {
