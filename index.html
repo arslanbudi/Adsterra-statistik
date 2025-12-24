@@ -3,25 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Fixed</title>
+    <title>SEKTE TOKe - Official Docs Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { background-color: #0F172A; color: #cbd5e1; font-family: sans-serif; }
+        body { background-color: #0F172A; color: #cbd5e1; font-family: 'Inter', sans-serif; }
         .panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; overflow: hidden; }
         
-        /* TABLE CSS - PASTI RAPI */
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { text-align: right; padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: #94a3b8; background: #0f172a; border-bottom: 1px solid #334155; }
-        th:first-child { text-align: left; width: 40%; }
-        td { padding: 10px 8px; border-bottom: 1px solid #334155; font-size: 13px; vertical-align: middle; text-align: right; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        td:first-child { text-align: left; white-space: normal; } /* Nama boleh wrap */
+        /* GRID TABLE SYSTEM (Anti-Break) */
+        .grid-table-header { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 40px; 
+            background: #0f172a; 
+            padding: 12px;
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #94a3b8; 
+            text-transform: uppercase;
+            border-bottom: 1px solid #334155;
+        }
+        .grid-table-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 40px;
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .grid-table-row:hover { background: rgba(30, 41, 59, 0.8); cursor: pointer; }
+        .col-right { text-align: right; }
         
+        /* Detail Table (Simplified) */
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 8px; font-size: 12px; border-bottom: 1px solid #334155; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
         .search-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px 12px; border-radius: 6px; width: 100%; }
         [x-cloak] { display: none !important; }
-        
-        /* Tombol Debug */
-        .debug-btn { font-size: 10px; color: #64748b; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8" x-data="dashboardApp()">
@@ -32,13 +52,12 @@
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">SEKTE TOKe</h1>
             <p class="text-xs text-slate-500 tracking-widest">ADSTERRA STATISTIC CENTER</p>
         </div>
-        <div class="flex gap-2 items-center">
+        <div class="flex gap-2">
             <template x-for="d in [1, 7, 30]">
                 <button @click="setRange(d)" 
                         :class="range === d ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'" 
                         class="px-4 py-2 text-xs font-bold rounded transition" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
-            <span class="debug-btn ml-2" @click="checkRawData">🛠️ Cek Data</span>
         </div>
     </div>
 
@@ -67,7 +86,7 @@
         </div>
     </div>
 
-    <!-- MAIN TABLE -->
+    <!-- MAIN GRID TABLE -->
     <div class="max-w-6xl mx-auto panel flex flex-col min-h-[600px]">
         <div class="p-4 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-800/50">
             <div class="flex items-center gap-2">
@@ -80,91 +99,77 @@
         </div>
 
         <div class="overflow-x-auto flex-1">
-            <table>
-                <thead>
-                    <tr>
-                        <th>PLACEMENT NAME</th>
-                        <th>IMPR</th>
-                        <th>CLICKS</th>
-                        <th>CTR</th>
-                        <th>CPM</th>
-                        <th>REV</th>
-                        <th style="width: 40px"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="item in filteredPlacements" :key="item.placement_id">
-                        <template x-data="{ expanded: false }">
-                            <React.Fragment> <!-- Virtual wrapper concept -->
-                                <tr class="hover:bg-slate-800/50 cursor-pointer transition-colors" @click="expanded = !expanded; if(expanded) loadDetail(item)">
-                                    <td>
-                                        <div class="font-bold text-slate-100 text-sm" x-text="getPlacementName(item.placement_id)"></div>
-                                        <span class="text-[10px] text-slate-500 font-mono bg-slate-900 px-1 rounded" x-text="'ID: ' + item.placement_id"></span>
-                                    </td>
-                                    <!-- Jika Impressi 0 tapi Revenue ada, kita hitung manual -->
-                                    <td class="text-slate-300" x-text="formatNumber(item.impressions)"></td>
-                                    <td class="text-slate-400" x-text="formatNumber(item.clicks)"></td>
-                                    <td class="text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></td>
-                                    <td class="text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
-                                    <td class="font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></td>
-                                    <td class="text-center text-slate-500">
-                                        <span x-show="!expanded">▼</span>
-                                        <span x-show="expanded" class="text-blue-500">▲</span>
-                                    </td>
-                                </tr>
+            <!-- Header Grid -->
+            <div class="grid-table-header">
+                <div>Placement Name</div>
+                <div class="col-right">Impr</div>
+                <div class="col-right">Clicks</div>
+                <div class="col-right">CTR</div>
+                <div class="col-right">CPM</div>
+                <div class="col-right">REV</div>
+                <div></div>
+            </div>
 
-                                <tr x-show="expanded" style="background-color: #0b1120;">
-                                    <td colspan="7" style="padding: 0;">
-                                        <div class="p-4 border-l-4 border-blue-600 m-2 bg-slate-800/30 rounded">
-                                            
-                                            <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-2 text-xs text-blue-300">
-                                                <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail...
-                                            </div>
-
-                                            <div x-show="!isLoadingDetail(item.placement_id)">
-                                                <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Detail Breakdown</div>
-                                                <div class="max-h-60 overflow-y-auto">
-                                                    <table style="background: transparent; table-layout: auto;">
-                                                        <thead>
-                                                            <tr>
-                                                                <th style="background:transparent; color:#64748b; padding-left:0;">Country</th>
-                                                                <th style="background:transparent; color:#64748b;">Impr</th>
-                                                                <th style="background:transparent; color:#64748b;">Rev</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
-                                                                <tr class="hover:bg-slate-700/50">
-                                                                    <td style="padding-left:0; font-weight:bold; color:#e2e8f0;">
-                                                                        <span x-text="c.country"></span>
-                                                                    </td>
-                                                                    <td class="text-slate-400" x-text="formatNumber(c.impressions)"></td>
-                                                                    <td class="font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
-                                                                </tr>
-                                                            </template>
-                                                             <tr x-show="getDetailData(item.placement_id).length === 0">
-                                                                <td colspan="3" class="text-center text-slate-500 py-4">
-                                                                    No detail data available. (Adsterra API Limit)
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </React.Fragment>
-                        </template>
-                    </template>
+            <!-- Loop Data -->
+            <template x-for="item in filteredPlacements" :key="item.placement_id">
+                <div x-data="{ expanded: false }">
                     
-                    <tr x-show="filteredPlacements.length === 0 && !loading.placement">
-                        <td colspan="7" class="p-8 text-center text-slate-500">
-                            Tidak ada data placement ditemukan.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                    <!-- Row Utama -->
+                    <div class="grid-table-row" @click="expanded = !expanded; if(expanded) loadDetail(item)">
+                        <div>
+                            <div class="font-bold text-slate-100 text-sm" x-text="getPlacementName(item.placement_id)"></div>
+                            <span class="text-[10px] text-slate-500 font-mono bg-slate-900 px-1 rounded" x-text="'ID: ' + item.placement_id"></span>
+                        </div>
+                        <div class="col-right text-slate-300" x-text="formatNumber(item.impressions)"></div>
+                        <div class="col-right text-slate-400" x-text="formatNumber(item.clicks)"></div>
+                        <div class="col-right text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></div>
+                        <div class="col-right text-yellow-600" x-text="formatCurrency(item.cpm)"></div>
+                        <div class="col-right font-bold text-emerald-400 text-base" x-text="formatCurrency(item.revenue)"></div>
+                        <div class="text-center text-slate-500">
+                            <span x-show="!expanded">▼</span><span x-show="expanded" class="text-blue-500">▲</span>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Detail -->
+                    <div x-show="expanded" style="background-color: #0b1120;" x-transition>
+                        <div class="p-4 pl-10 border-l-4 border-blue-600">
+                            
+                            <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-2 text-xs text-blue-300">
+                                <span class="animate-spin inline-block mr-2">⟳</span> Mengambil data negara...
+                            </div>
+
+                            <div x-show="!isLoadingDetail(item.placement_id)">
+                                <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Detail Breakdown</div>
+                                <div class="max-h-60 overflow-y-auto">
+                                    <!-- Header Detail -->
+                                    <div class="detail-grid bg-slate-900 text-slate-500 font-bold">
+                                        <div>Country</div>
+                                        <div class="col-right">Impr</div>
+                                        <div class="col-right">Rev</div>
+                                    </div>
+                                    <!-- Body Detail -->
+                                    <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
+                                        <div class="detail-grid hover:bg-slate-800/50">
+                                            <div class="font-bold text-slate-300" x-text="c.country"></div>
+                                            <div class="col-right text-slate-400" x-text="formatNumber(c.impressions)"></div>
+                                            <div class="col-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></div>
+                                        </div>
+                                    </template>
+                                    <div x-show="getDetailData(item.placement_id).length === 0" class="text-center py-2 text-xs text-slate-500">
+                                        No Data
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <div x-show="filteredPlacements.length === 0 && !loading.placement" class="p-12 text-center text-slate-500">
+                Data placement tidak ditemukan atau belum dimuat.
+            </div>
         </div>
     </div>
 
@@ -175,19 +180,17 @@
                 loading: { placement: false },
                 errorMessage: null,
                 searchQuery: '',
-                rawSample: null,
-
                 data: { placement: [] },
                 placementMap: {},
                 details: {}, 
                 loadingDetails: {},
 
-                // --- MAGIC FUNCTION: RUMUS MATEMATIKA ---
-                // Jika API kasih 0, kita hitung sendiri dari Revenue & CPM
+                // --- CLEAN DATA (SESUAI DOKUMENTASI ADSTERRA) ---
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
-                        let finalId = item.placement_id || item.id || item.placement || 0;
+                        // DOC: ID ada di key 'placement' (integer)
+                        let finalId = item.placement || item.id || item.placement_id || 0;
                         
                         const p = (val) => {
                             if (typeof val === 'number') return val;
@@ -195,30 +198,19 @@
                             return 0;
                         };
 
-                        let rev = p(item.revenue);
-                        let cpm = p(item.cpm);
-                        let clicks = p(item.clicks);
-                        let ctr = p(item.ctr);
-                        
-                        // Cek 3 kemungkinan nama kolom
-                        let rawImp = p(item.impressions) || p(item.imps) || p(item.views);
-
-                        // --- RUMUS JITU FIX 0 IMPRESSIONS ---
-                        // Jika Impressions 0 TAPI Revenue & CPM ada, hitung mundur.
-                        // Rumus: Revenue = (Impression / 1000) * CPM
-                        // Maka: Impression = (Revenue / CPM) * 1000
-                        if (rawImp === 0 && cpm > 0 && rev > 0) {
-                            rawImp = Math.round((rev / cpm) * 1000);
-                        }
+                        // DOC: Impression key is 'impression' (singular)
+                        let rawImp = p(item.impression);
+                        // Fallback ke key lain jika API tidak konsisten
+                        if (rawImp === 0) rawImp = p(item.impressions) || p(item.imps);
 
                         return {
                             ...item,
                             placement_id: finalId,
                             impressions: rawImp,
-                            clicks: clicks,
-                            revenue: rev,
-                            ctr: ctr,
-                            cpm: cpm
+                            clicks: p(item.clicks),
+                            revenue: p(item.revenue),
+                            ctr: p(item.ctr),
+                            cpm: p(item.cpm)
                         };
                     });
                 },
@@ -245,14 +237,6 @@
                     return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'ID: ' + id;
                 },
 
-                checkRawData() {
-                    if(this.rawSample) {
-                        alert("Data Mentah Baris Pertama:\n" + JSON.stringify(this.rawSample, null, 2));
-                    } else {
-                        alert("Belum ada data yang termuat.");
-                    }
-                },
-
                 async fetchAll() {
                     this.errorMessage = null;
                     this.loading.placement = true;
@@ -268,9 +252,9 @@
                         const jsonStat = await resStat.json();
                         const jsonMeta = await resMeta.json();
 
-                        if(jsonStat.items && jsonStat.items.length > 0) this.rawSample = jsonStat.items[0];
+                        if (jsonStat.status === 'error') throw new Error(jsonStat.error);
 
-                        this.data.placement = this.cleanData(jsonStat.items || []).sort((a,b) => b.revenue - a.revenue);
+                        this.data.placement = this.cleanData(jsonStat.items).sort((a,b) => b.revenue - a.revenue);
 
                         this.placementMap = {};
                         if(jsonMeta.placements) {
@@ -304,12 +288,9 @@
                     try {
                         const res = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=country&placement_id=${id}`);
                         const json = await res.json();
-                        this.details[id] = this.cleanData(json.items || []).sort((a,b) => b.revenue - a.revenue);
-                    } catch (e) {
-                        // Silent fail
-                    } finally {
-                        this.loadingDetails[id] = false;
-                    }
+                        this.details[id] = this.cleanData(json.items).sort((a,b) => b.revenue - a.revenue);
+                    } catch (e) { console.error(e); } 
+                    finally { this.loadingDetails[id] = false; }
                 },
 
                 getDateParams() {
