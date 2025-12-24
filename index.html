@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOKe Ultimate - Public Stats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        body { background-color: #0b1121; color: #cbd5e1; font-family: 'Courier New', Courier, monospace; }
+        .cyber-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #1e293b;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+            backdrop-filter: blur(8px);
+        }
+        .cyber-border-b { border-bottom: 1px solid #1e293b; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8" x-data="publicDashboard()">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-10 text-center">
+        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-widest">TOKe ULTIMATE</h1>
+        <p class="text-slate-500 text-sm mt-2 uppercase tracking-widest">Transparency Report & Public Statistics</p>
+    </header>
+
+    <!-- Summary Cards -->
+    <section class="max-w-6xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Revenue -->
+        <div class="cyber-card p-6 rounded-lg text-center">
+            <div class="text-xs text-blue-400 uppercase mb-2">Total Revenue</div>
+            <div class="text-3xl font-bold text-white" x-text="loading ? '...' : formatCurrency(totalRevenue)"></div>
+        </div>
+        <!-- Impressions -->
+        <div class="cyber-card p-6 rounded-lg text-center">
+            <div class="text-xs text-blue-400 uppercase mb-2">Impressions</div>
+            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatNumber(totalImpressions)"></div>
+        </div>
+        <!-- Clicks -->
+        <div class="cyber-card p-6 rounded-lg text-center">
+            <div class="text-xs text-blue-400 uppercase mb-2">Clicks</div>
+            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatNumber(totalClicks)"></div>
+        </div>
+        <!-- CTR -->
+        <div class="cyber-card p-6 rounded-lg text-center">
+            <div class="text-xs text-blue-400 uppercase mb-2">Avg CTR</div>
+            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatDecimal(averageCTR) + '%'"></div>
+        </div>
+    </section>
+
+    <!-- Filter & Status -->
+    <div class="max-w-6xl mx-auto mb-4 flex justify-between items-end">
+        <div class="text-xs text-slate-600">
+            Data Source: <span class="text-blue-500">Verified Adsterra API</span>
+        </div>
+        <div class="flex gap-2">
+             <select x-model="dateRange" @change="fetchData" class="bg-slate-900 border border-slate-700 text-xs rounded px-3 py-2 focus:outline-none text-slate-300">
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="1">Today</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <section class="max-w-6xl mx-auto cyber-card rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                        <th class="px-6 py-4 font-medium">Date</th>
+                        <th class="px-6 py-4 font-medium text-right">Impressions</th>
+                        <th class="px-6 py-4 font-medium text-right">Clicks</th>
+                        <th class="px-6 py-4 font-medium text-right">CTR</th>
+                        <th class="px-6 py-4 font-medium text-right">CPM</th>
+                        <th class="px-6 py-4 font-medium text-right text-green-400">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800">
+                    <template x-for="item in stats" :key="item.date">
+                        <tr class="hover:bg-slate-800/30 transition-colors">
+                            <td class="px-6 py-4 font-mono text-blue-200" x-text="item.date"></td>
+                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatNumber(item.impressions)"></td>
+                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatNumber(item.clicks)"></td>
+                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatDecimal(item.ctr) + '%'"></td>
+                            <td class="px-6 py-4 text-right text-yellow-500/80" x-text="formatCurrency(item.cpm)"></td>
+                            <td class="px-6 py-4 text-right font-bold text-green-400" x-text="formatCurrency(item.revenue)"></td>
+                        </tr>
+                    </template>
+                    <!-- Loading State -->
+                    <tr x-show="loading">
+                        <td colspan="6" class="px-6 py-8 text-center text-slate-500 animate-pulse">
+                            Establishing secure connection to TOKe Server...
+                        </td>
+                    </tr>
+                    <!-- Error State -->
+                    <tr x-show="error">
+                        <td colspan="6" class="px-6 py-8 text-center text-red-400">
+                            <span x-text="error"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer class="text-center text-slate-700 text-xs mt-12 mb-8">
+        &copy; 2025 TOKe Ultimate Systems. Encrypted & Secure.
+    </footer>
+
+    <script>
+        function publicDashboard() {
+            return {
+                stats: [],
+                loading: true,
+                error: null,
+                dateRange: '7', // Default 7 hari
+
+                // Computed Totals
+                get totalRevenue() { return this.stats.reduce((a, b) => a + b.revenue, 0); },
+                get totalImpressions() { return this.stats.reduce((a, b) => a + b.impressions, 0); },
+                get totalClicks() { return this.stats.reduce((a, b) => a + b.clicks, 0); },
+                get averageCTR() { return this.totalImpressions > 0 ? (this.totalClicks / this.totalImpressions) * 100 : 0; },
+
+                init() {
+                    this.fetchData();
+                },
+
+                async fetchData() {
+                    this.loading = true;
+                    this.error = null;
+                    
+                    // Hitung tanggal
+                    const end = new Date();
+                    const start = new Date();
+                    start.setDate(end.getDate() - parseInt(this.dateRange));
+
+                    const startStr = start.toISOString().split('T')[0];
+                    const endStr = end.toISOString().split('T')[0];
+
+                    try {
+                        // Request ke INTERNAL Backend (Cloudflare Function), bukan ke Adsterra langsung
+                        const res = await fetch(`/api/stats?start_date=${startStr}&end_date=${endStr}`);
+                        
+                        if (!res.ok) throw new Error("Gagal mengambil data dari server");
+                        
+                        const data = await res.json();
+                        
+                        if (data.status === 'error') throw new Error(data.error);
+                        
+                        this.stats = data.items || [];
+                    } catch (e) {
+                        this.error = "Data tidak dapat dimuat saat ini.";
+                        console.error(e);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); },
+                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val); },
+                formatDecimal(val) { return parseFloat(val).toFixed(2); }
+            }
+        }
+    </script>
+</body>
+</html>
