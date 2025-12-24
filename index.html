@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Pro Dashboard</title>
+    <title>SEKTE TOKe - Pro Stats</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
@@ -12,108 +12,101 @@
             theme: {
                 extend: {
                     colors: {
-                        slate: {
-                            850: '#1e293b', // Custom panel color
-                            900: '#0f172a', // Main bg
-                        }
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Paksa Dark Mode */
+        /* GLOBAL DARK MODE FIX */
         body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
         
-        /* Input Styles seperti Adsterra Dark */
-        .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; display: block; }
+        /* Form Elements Style - FULL DARK */
+        .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; display: block; }
+        
         .ad-input { 
             width: 100%; 
             background-color: #1e293b; 
             border: 1px solid #334155; 
             color: #f1f5f9; 
             border-radius: 4px; 
-            padding: 8px 12px; 
+            padding: 10px 12px; 
             font-size: 13px; 
-            transition: border-color 0.2s;
+            appearance: none; /* Hapus panah default browser */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
         }
-        .ad-input:focus { outline: none; border-color: #ef4444; } /* Merah Adsterra */
+        
+        /* Fix Input Date Icon Color */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        
+        .ad-input:focus { outline: none; border-color: #ef4444; }
         
         /* Tombol Group By */
         .group-btn {
             background-color: #1e293b;
             border: 1px solid #334155;
             color: #94a3b8;
-            padding: 6px 16px;
+            padding: 8px 20px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .group-btn:hover { background-color: #334155; }
+        .group-btn:hover { background-color: #334155; color: white; }
         .group-btn.active { 
             background-color: rgba(34, 197, 94, 0.1); 
             color: #4ade80; 
             border-color: #22c55e; 
+            z-index: 10;
         }
         
-        /* Table Styling */
+        /* TABLE STYLING */
         table { width: 100%; border-collapse: collapse; }
         th { 
-            text-align: right; 
-            padding: 12px 16px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            color: #cbd5e1; 
-            border-bottom: 2px solid #334155;
-            letter-spacing: 0.5px;
+            text-align: right; padding: 12px 16px; 
+            font-size: 11px; font-weight: 700; text-transform: uppercase; 
+            color: #cbd5e1; border-bottom: 2px solid #334155; 
         }
         th:first-child { text-align: left; }
         td { 
-            padding: 14px 16px; 
-            font-size: 13px; 
-            border-bottom: 1px solid #1e293b; 
-            color: #94a3b8; 
-            text-align: right;
+            padding: 14px 16px; font-size: 13px; 
+            border-bottom: 1px solid #1e293b; color: #94a3b8; text-align: right; 
         }
         td:first-child { text-align: left; color: #f8fafc; font-weight: 500; }
         tr:hover td { background-color: #1e293b; }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        
         [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen p-6" x-data="dashboardApp()">
 
-    <!-- Header Simpel -->
+    <!-- Header -->
     <div class="max-w-[1600px] mx-auto mb-8 flex items-center gap-3">
-        <div class="w-8 h-8 bg-gradient-to-br from-red-600 to-orange-600 rounded flex items-center justify-center font-bold text-white text-lg">S</div>
-        <h1 class="text-xl font-bold tracking-tight text-white">SEKTE TOKe <span class="text-slate-500 font-normal text-sm ml-2"> Pro Stats</span></h1>
+        <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white text-lg">S</div>
+        <h1 class="text-xl font-bold text-white">SEKTE TOKe <span class="text-slate-500 font-normal text-sm ml-2">Pro Stats</span></h1>
     </div>
 
     <!-- MAIN CONTAINER -->
     <div class="max-w-[1600px] mx-auto">
         
-        <!-- 1. FILTERS SECTION (Layout Renggang) -->
-        <div class="mb-8">
-            <h2 class="text-base font-bold text-white mb-4">Filters</h2>
+        <!-- 1. FILTERS (Layout Renggang & Lebar) -->
+        <div class="mb-10">
+            <h2 class="text-base font-bold text-white mb-6 border-b border-slate-800 pb-2">Filters</h2>
             
-            <!-- Grid Filter 4 Kolom -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
-                
-                <!-- Date Range -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-6">
+                <!-- Date -->
                 <div>
                     <label class="ad-label">Date range</label>
                     <div class="flex gap-2">
-                        <input type="date" x-model="filters.start" class="ad-input">
-                        <input type="date" x-model="filters.end" class="ad-input">
+                        <input type="date" x-model="filters.start" class="ad-input" style="background-image: none;">
+                        <input type="date" x-model="filters.end" class="ad-input" style="background-image: none;">
                     </div>
                 </div>
 
@@ -151,64 +144,55 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Buttons -->
             <div class="flex items-center gap-4">
-                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded text-sm font-bold shadow-lg transition-all transform active:scale-95">
+                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded text-xs font-bold uppercase tracking-wide shadow transition">
                     APPLY
                 </button>
-                <button @click="resetFilters" class="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wide transition">
+                <button @click="resetFilters" class="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wide transition">
                     RESET
                 </button>
             </div>
         </div>
 
-        <!-- 2. GROUP BY SECTION -->
-        <div class="mb-6">
-            <h2 class="text-sm font-bold text-white mb-3">Group by</h2>
-            <div class="flex flex-wrap gap-[-1px]">
-                <!-- Group Buttons (Menyatu seperti screenshot) -->
-                <button @click="setGroup('date')" :class="groupBy === 'date' ? 'active' : ''" class="group-btn rounded-l-md border-r-0">DATE</button>
-                <button @click="setGroup('domain')" :class="groupBy === 'domain' ? 'active' : ''" class="group-btn border-r-0">DOMAIN</button>
-                <button @click="setGroup('placement')" :class="groupBy === 'placement' ? 'active' : ''" class="group-btn border-r-0">PLACEMENT</button>
-                <button @click="setGroup('country')" :class="groupBy === 'country' ? 'active' : ''" class="group-btn rounded-r-md">COUNTRY</button>
+        <!-- 2. GROUP BY -->
+        <div class="mb-8">
+            <h2 class="text-sm font-bold text-white mb-4">Group by</h2>
+            <div class="flex flex-wrap shadow-sm">
+                <button @click="setGroup('date')" :class="groupBy === 'date' ? 'active' : ''" class="group-btn rounded-l">DATE</button>
+                <button @click="setGroup('domain')" :class="groupBy === 'domain' ? 'active' : ''" class="group-btn border-l-0">DOMAIN</button>
+                <button @click="setGroup('placement')" :class="groupBy === 'placement' ? 'active' : ''" class="group-btn border-l-0">PLACEMENT</button>
+                <button @click="setGroup('country')" :class="groupBy === 'country' ? 'active' : ''" class="group-btn border-l-0 rounded-r">COUNTRY</button>
             </div>
         </div>
 
-        <!-- Error Message -->
-        <div x-show="errorMessage" x-cloak class="mb-4 p-3 bg-red-900/30 border border-red-500/50 text-red-200 rounded text-xs font-mono">
-            Error: <span x-text="errorMessage"></span>
-        </div>
-
-        <!-- 3. DATA TABLE -->
-        <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-xl min-h-[400px]">
+        <!-- 3. TABLE -->
+        <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-2xl min-h-[400px]">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
                         <tr>
-                            <!-- Dynamic First Header -->
                             <th class="w-1/3" x-text="getHeaderLabel()"></th>
                             <th>Impressions</th>
                             <th>Clicks</th>
                             <th>CTR</th>
                             <th>CPM</th>
-                            <th style="color: #4ade80;">Revenue</th> <!-- Green Text for Revenue Header -->
+                            <th style="color: #4ade80;">Revenue</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-800">
-                        <!-- Loading State -->
+                    <tbody>
+                        <!-- Loading -->
                         <tr x-show="loading">
-                            <td colspan="6" class="text-center py-10">
+                            <td colspan="6" class="text-center py-16">
                                 <div class="inline-block animate-spin w-6 h-6 border-2 border-slate-500 border-t-white rounded-full"></div>
-                                <p class="text-xs text-slate-500 mt-2">Loading data...</p>
                             </td>
                         </tr>
 
-                        <!-- Data Loop -->
+                        <!-- Data -->
                         <template x-for="row in tableData" :key="Math.random()">
                             <tr>
-                                <!-- Kolom Pertama Dinamis -->
                                 <td>
-                                    <div class="font-medium" x-text="getRowLabel(row)"></div>
+                                    <div class="font-medium text-slate-200" x-text="getRowLabel(row)"></div>
                                 </td>
                                 <td x-text="formatNumber(row.impression)"></td>
                                 <td x-text="formatNumber(row.clicks)"></td>
@@ -218,14 +202,14 @@
                             </tr>
                         </template>
 
-                        <!-- Empty State -->
+                        <!-- Empty -->
                         <tr x-show="!loading && tableData.length === 0">
-                            <td colspan="6" class="text-center py-12 text-slate-500 text-sm">
-                                No data available for the selected filters.
+                            <td colspan="6" class="text-center py-16 text-slate-500 text-sm">
+                                No data available for selected filters.
                             </td>
                         </tr>
 
-                        <!-- Total Row (Footer) -->
+                        <!-- Total Footer -->
                         <tr x-show="tableData.length > 0" class="bg-slate-800 font-bold border-t-2 border-slate-600">
                             <td class="text-white">Total:</td>
                             <td class="text-white" x-text="formatNumber(totals.impression)"></td>
@@ -236,12 +220,6 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <!-- Pagination Mockup (Visual Only) -->
-            <div class="px-4 py-3 border-t border-slate-700 bg-[#0f172a] flex justify-end items-center gap-4 text-xs text-slate-500">
-                <span>Rows per page: <b>All</b></span>
-                <span>1-<span x-text="tableData.length"></span> of <span x-text="tableData.length"></span></span>
             </div>
         </div>
 
@@ -254,7 +232,6 @@
                 errorMessage: null,
                 groupBy: 'date',
                 
-                // State Filter
                 filters: {
                     start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
                     end: new Date().toISOString().split('T')[0],
@@ -263,15 +240,12 @@
                     placement: 'all'
                 },
 
-                // Data
                 tableData: [],
                 metadata: { domains: [], placements: [] },
                 map: { domains: {}, placements: {} },
                 
-                // Static Country List (Bisa ditambah)
-                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU"],
+                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU", "MY", "SG"],
 
-                // Totals Calculation
                 get totals() {
                     return this.tableData.reduce((acc, row) => {
                         acc.impression += row.impression;
@@ -282,13 +256,11 @@
                 },
 
                 init() {
-                    // Update CTR & CPM Totals dynamically
                     this.$watch('tableData', () => {
                         const t = this.totals;
                         this.totals.ctr = t.impression > 0 ? (t.clicks / t.impression) * 100 : 0;
                         this.totals.cpm = t.impression > 0 ? (t.revenue / t.impression) * 1000 : 0;
                     });
-                    
                     this.fetchMetadata();
                     this.fetchStats();
                 },
@@ -300,7 +272,6 @@
                         this.metadata.domains = json.domains || [];
                         this.metadata.placements = json.placements || [];
                         
-                        // Mapping untuk Label
                         this.metadata.domains.forEach(d => this.map.domains[d.id] = d.name);
                         this.metadata.placements.forEach(p => this.map.placements[p.id] = p.title);
                     } catch(e) { console.error(e); }
@@ -322,12 +293,13 @@
 
                     try {
                         const res = await fetch(`/api/stats?${params.toString()}`);
-                        if(!res.ok) throw new Error("Gagal mengambil data API.");
-                        
+                        // Handle Empty JSON gracefully
                         const json = await res.json();
-                        this.tableData = this.cleanData(json.items || []);
+                        const items = json.items || [];
+                        this.tableData = this.cleanData(items);
                     } catch(e) {
-                        this.errorMessage = e.message;
+                        // Silent fail for empty data
+                        this.tableData = [];
                     } finally {
                         this.loading = false;
                     }
@@ -341,7 +313,7 @@
                         let cpm = p(item.cpm);
                         let imp = p(item.impression) || p(item.impressions) || p(item.imps);
                         
-                        // Math Fallback untuk Impressi 0
+                        // Math Fallback Fix 0 Impressi
                         if (imp === 0 && cpm > 0 && rev > 0) {
                             imp = Math.round((rev / cpm) * 1000);
                         }
@@ -366,15 +338,15 @@
                     this.filters.country = 'all';
                     this.filters.domain = 'all';
                     this.filters.placement = 'all';
+                    this.filters.start = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
+                    this.filters.end = new Date().toISOString().split('T')[0];
                     this.fetchStats();
                 },
 
-                // Label Header Kolom Pertama
                 getHeaderLabel() {
                     return this.groupBy.charAt(0).toUpperCase() + this.groupBy.slice(1);
                 },
 
-                // Label Baris Kolom Pertama
                 getRowLabel(row) {
                     if (this.groupBy === 'date') return row.date;
                     if (this.groupBy === 'country') return row.country;
