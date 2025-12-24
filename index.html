@@ -3,164 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKe Ultimate - Public Stats</title>
+    <title>TOKe Ultimate - Publisher Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { background-color: #0b1121; color: #cbd5e1; font-family: 'Courier New', Courier, monospace; }
-        .cyber-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid #1e293b;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
-            backdrop-filter: blur(8px);
+        /* Tech/Cyber styling */
+        body { background-color: #0F172A; color: #E2E8F0; font-family: 'Inter', system-ui, sans-serif; }
+        .panel {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 0.75rem;
         }
-        .cyber-border-b { border-bottom: 1px solid #1e293b; }
+        .th-cell { @apply px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right; }
+        .td-cell { @apply px-4 py-3 text-sm border-t border-slate-700/50 text-right; }
+        .td-left { @apply text-left font-medium text-slate-200; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8" x-data="publicDashboard()">
+<body class="min-h-screen p-4 lg:p-8" x-data="dashboardApp()">
 
-    <!-- Header -->
-    <header class="max-w-6xl mx-auto mb-10 text-center">
-        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-widest">TOKe ULTIMATE</h1>
-        <p class="text-slate-500 text-sm mt-2 uppercase tracking-widest">Transparency Report & Public Statistics</p>
+    <!-- Header & Controls -->
+    <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                TOKe ULTIMATE
+            </h1>
+            <p class="text-xs text-slate-500 tracking-widest mt-1">REALTIME PUBLISHER STATISTICS</p>
+        </div>
+        
+        <div class="flex items-center gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            <button @click="setRange(1)" :class="range === 1 ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1 text-xs rounded transition">Today</button>
+            <button @click="setRange(7)" :class="range === 7 ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1 text-xs rounded transition">7 Days</button>
+            <button @click="setRange(30)" :class="range === 30 ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1 text-xs rounded transition">30 Days</button>
+        </div>
     </header>
 
-    <!-- Summary Cards -->
-    <section class="max-w-6xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Revenue -->
-        <div class="cyber-card p-6 rounded-lg text-center">
-            <div class="text-xs text-blue-400 uppercase mb-2">Total Revenue</div>
-            <div class="text-3xl font-bold text-white" x-text="loading ? '...' : formatCurrency(totalRevenue)"></div>
+    <!-- KPI Cards (Aggregated) -->
+    <section class="max-w-7xl mx-auto mb-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="panel p-5 border-l-4 border-emerald-500">
+            <div class="text-xs text-slate-400 uppercase">Total Revenue</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
         </div>
-        <!-- Impressions -->
-        <div class="cyber-card p-6 rounded-lg text-center">
-            <div class="text-xs text-blue-400 uppercase mb-2">Impressions</div>
-            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatNumber(totalImpressions)"></div>
+        <div class="panel p-5 border-l-4 border-blue-500">
+            <div class="text-xs text-slate-400 uppercase">Impressions</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalImpressions)"></div>
         </div>
-        <!-- Clicks -->
-        <div class="cyber-card p-6 rounded-lg text-center">
-            <div class="text-xs text-blue-400 uppercase mb-2">Clicks</div>
-            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatNumber(totalClicks)"></div>
+        <div class="panel p-5 border-l-4 border-purple-500">
+            <div class="text-xs text-slate-400 uppercase">Clicks</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalClicks)"></div>
         </div>
-        <!-- CTR -->
-        <div class="cyber-card p-6 rounded-lg text-center">
-            <div class="text-xs text-blue-400 uppercase mb-2">Avg CTR</div>
-            <div class="text-2xl font-bold text-slate-200" x-text="loading ? '...' : formatDecimal(averageCTR) + '%'"></div>
+        <div class="panel p-5 border-l-4 border-yellow-500">
+            <div class="text-xs text-slate-400 uppercase">CPM (Avg)</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(avgCPM)"></div>
         </div>
     </section>
 
-    <!-- Filter & Status -->
-    <div class="max-w-6xl mx-auto mb-4 flex justify-between items-end">
-        <div class="text-xs text-slate-600">
-            Data Source: <span class="text-blue-500">Verified Adsterra API</span>
-        </div>
-        <div class="flex gap-2">
-             <select x-model="dateRange" @change="fetchData" class="bg-slate-900 border border-slate-700 text-xs rounded px-3 py-2 focus:outline-none text-slate-300">
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="1">Today</option>
-            </select>
-        </div>
+    <!-- Error Display -->
+    <div x-show="errorMessage" class="max-w-7xl mx-auto mb-6 p-4 bg-red-900/30 border border-red-500/50 text-red-200 rounded text-sm text-center">
+        <span x-text="errorMessage"></span>
     </div>
 
-    <!-- Main Table -->
-    <section class="max-w-6xl mx-auto cyber-card rounded-lg overflow-hidden">
+    <!-- MAIN CONTENT GRID -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- 1. PLACEMENT STATISTICS -->
+        <div class="panel overflow-hidden flex flex-col h-[500px]">
+            <div class="px-6 py-4 bg-slate-800/30 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-cyan-400 text-sm tracking-wide">PERFORMANCE BY PLACEMENT</h3>
+                <span x-show="loading.placement" class="text-xs text-slate-500 animate-pulse">Syncing...</span>
+            </div>
+            <div class="overflow-auto flex-1">
+                <table class="w-full">
+                    <thead class="bg-slate-900/50 sticky top-0">
+                        <tr>
+                            <th class="th-cell text-left">Placement ID</th>
+                            <th class="th-cell">Impr</th>
+                            <th class="th-cell">CPM</th>
+                            <th class="th-cell text-emerald-400">Rev ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="item in data.placement" :key="item.placement_id">
+                            <tr class="hover:bg-slate-700/30 transition">
+                                <td class="td-cell td-left font-mono text-xs text-blue-300" x-text="item.placement_id"></td>
+                                <td class="td-cell text-slate-400" x-text="formatCompact(item.impressions)"></td>
+                                <td class="td-cell text-yellow-500/80" x-text="formatCurrency(item.cpm)"></td>
+                                <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
+                            </tr>
+                        </template>
+                        <tr x-show="!loading.placement && data.placement.length === 0"><td colspan="4" class="p-8 text-center text-slate-500 text-sm">No data available</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. COUNTRY STATISTICS -->
+        <div class="panel overflow-hidden flex flex-col h-[500px]">
+            <div class="px-6 py-4 bg-slate-800/30 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-purple-400 text-sm tracking-wide">PERFORMANCE BY COUNTRY</h3>
+                <span x-show="loading.country" class="text-xs text-slate-500 animate-pulse">Syncing...</span>
+            </div>
+            <div class="overflow-auto flex-1">
+                <table class="w-full">
+                    <thead class="bg-slate-900/50 sticky top-0">
+                        <tr>
+                            <th class="th-cell text-left">Country</th>
+                            <th class="th-cell">Impr</th>
+                            <th class="th-cell">CTR</th>
+                            <th class="th-cell text-emerald-400">Rev ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="item in data.country" :key="item.country">
+                            <tr class="hover:bg-slate-700/30 transition">
+                                <td class="td-cell td-left flex items-center gap-2">
+                                    <span class="text-slate-200 font-bold text-xs bg-slate-700 px-1 rounded" x-text="item.country"></span>
+                                </td>
+                                <td class="td-cell text-slate-400" x-text="formatCompact(item.impressions)"></td>
+                                <td class="td-cell text-blue-400" x-text="parseFloat(item.ctr).toFixed(2) + '%'"></td>
+                                <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
+                            </tr>
+                        </template>
+                         <tr x-show="!loading.country && data.country.length === 0"><td colspan="4" class="p-8 text-center text-slate-500 text-sm">No data available</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. DAILY TREND (Full Width) -->
+    <div class="max-w-7xl mx-auto mt-8 panel overflow-hidden">
+         <div class="px-6 py-4 bg-slate-800/30 border-b border-slate-700 flex justify-between items-center">
+            <h3 class="font-bold text-slate-200 text-sm tracking-wide">DAILY BREAKDOWN</h3>
+            <span x-show="loading.date" class="text-xs text-slate-500 animate-pulse">Syncing...</span>
+        </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead>
-                    <tr class="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                        <th class="px-6 py-4 font-medium">Date</th>
-                        <th class="px-6 py-4 font-medium text-right">Impressions</th>
-                        <th class="px-6 py-4 font-medium text-right">Clicks</th>
-                        <th class="px-6 py-4 font-medium text-right">CTR</th>
-                        <th class="px-6 py-4 font-medium text-right">CPM</th>
-                        <th class="px-6 py-4 font-medium text-right text-green-400">Revenue</th>
+            <table class="w-full">
+                <thead class="bg-slate-900/50">
+                    <tr>
+                        <th class="th-cell text-left">Date</th>
+                        <th class="th-cell">Impressions</th>
+                        <th class="th-cell">Clicks</th>
+                        <th class="th-cell">CTR</th>
+                        <th class="th-cell">CPM</th>
+                        <th class="th-cell text-emerald-400">Revenue</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800">
-                    <template x-for="item in stats" :key="item.date">
-                        <tr class="hover:bg-slate-800/30 transition-colors">
-                            <td class="px-6 py-4 font-mono text-blue-200" x-text="item.date"></td>
-                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatNumber(item.impressions)"></td>
-                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatNumber(item.clicks)"></td>
-                            <td class="px-6 py-4 text-right text-slate-400" x-text="formatDecimal(item.ctr) + '%'"></td>
-                            <td class="px-6 py-4 text-right text-yellow-500/80" x-text="formatCurrency(item.cpm)"></td>
-                            <td class="px-6 py-4 text-right font-bold text-green-400" x-text="formatCurrency(item.revenue)"></td>
+                <tbody>
+                    <template x-for="item in data.date" :key="item.date">
+                        <tr class="hover:bg-slate-700/30 transition border-t border-slate-700/50">
+                            <td class="px-4 py-3 text-sm text-left font-mono text-slate-400" x-text="item.date"></td>
+                            <td class="td-cell text-slate-300" x-text="formatNumber(item.impressions)"></td>
+                            <td class="td-cell text-slate-300" x-text="formatNumber(item.clicks)"></td>
+                            <td class="td-cell text-blue-400" x-text="parseFloat(item.ctr).toFixed(2) + '%'"></td>
+                            <td class="td-cell text-yellow-500/80" x-text="formatCurrency(item.cpm)"></td>
+                            <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
                         </tr>
                     </template>
-                    <!-- Loading State -->
-                    <tr x-show="loading">
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-500 animate-pulse">
-                            Establishing secure connection to TOKe Server...
-                        </td>
-                    </tr>
-                    <!-- Error State -->
-                    <tr x-show="error">
-                        <td colspan="6" class="px-6 py-8 text-center text-red-400">
-                            <span x-text="error"></span>
-                        </td>
-                    </tr>
                 </tbody>
             </table>
         </div>
-    </section>
-
-    <footer class="text-center text-slate-700 text-xs mt-12 mb-8">
-        &copy; 2025 TOKe Ultimate Systems. Encrypted & Secure.
-    </footer>
+    </div>
+    
+    <div class="text-center text-slate-600 text-xs mt-10 mb-5 font-mono">
+        SYSTEM READY // TOKe ULTIMATE v2.0
+    </div>
 
     <script>
-        function publicDashboard() {
+        function dashboardApp() {
             return {
-                stats: [],
-                loading: true,
-                error: null,
-                dateRange: '7', // Default 7 hari
+                range: 7,
+                loading: { date: false, placement: false, country: false },
+                errorMessage: null,
+                
+                // Data Store untuk 3 dimensi
+                data: {
+                    date: [],
+                    placement: [],
+                    country: []
+                },
 
-                // Computed Totals
-                get totalRevenue() { return this.stats.reduce((a, b) => a + b.revenue, 0); },
-                get totalImpressions() { return this.stats.reduce((a, b) => a + b.impressions, 0); },
-                get totalClicks() { return this.stats.reduce((a, b) => a + b.clicks, 0); },
-                get averageCTR() { return this.totalImpressions > 0 ? (this.totalClicks / this.totalImpressions) * 100 : 0; },
+                // Aggregated Totals (dihitung dari data Harian agar akurat)
+                get totalRevenue() { return this.data.date.reduce((acc, cur) => acc + cur.revenue, 0); },
+                get totalImpressions() { return this.data.date.reduce((acc, cur) => acc + cur.impressions, 0); },
+                get totalClicks() { return this.data.date.reduce((acc, cur) => acc + cur.clicks, 0); },
+                get avgCPM() { return this.totalImpressions > 0 ? (this.totalRevenue / this.totalImpressions * 1000) : 0; },
 
                 init() {
-                    this.fetchData();
+                    this.fetchAll();
                 },
 
-                async fetchData() {
-                    this.loading = true;
-                    this.error = null;
+                setRange(days) {
+                    this.range = days;
+                    this.fetchAll();
+                },
+
+                async fetchAll() {
+                    this.errorMessage = null;
                     
-                    // Hitung tanggal
+                    // Hitung Tanggal
                     const end = new Date();
                     const start = new Date();
-                    start.setDate(end.getDate() - parseInt(this.dateRange));
+                    start.setDate(end.getDate() - this.range);
+                    
+                    const pStart = start.toISOString().split('T')[0];
+                    const pEnd = end.toISOString().split('T')[0];
 
-                    const startStr = start.toISOString().split('T')[0];
-                    const endStr = end.toISOString().split('T')[0];
+                    // Kita jalankan 3 request secara paralel agar cepat
+                    // 1. Get Daily (group_by=date)
+                    // 2. Get Placements (group_by=placement)
+                    // 3. Get Countries (group_by=country)
+                    
+                    this.loading.date = true;
+                    this.loading.placement = true;
+                    this.loading.country = true;
 
-                    try {
-                        // Request ke INTERNAL Backend (Cloudflare Function), bukan ke Adsterra langsung
-                        const res = await fetch(`/api/stats?start_date=${startStr}&end_date=${endStr}`);
-                        
-                        if (!res.ok) throw new Error("Gagal mengambil data dari server");
-                        
-                        const data = await res.json();
-                        
-                        if (data.status === 'error') throw new Error(data.error);
-                        
-                        this.stats = data.items || [];
-                    } catch (e) {
-                        this.error = "Data tidak dapat dimuat saat ini.";
-                        console.error(e);
-                    } finally {
-                        this.loading = false;
-                    }
+                    // Helper function untuk fetch
+                    const fetchData = async (groupBy, targetKey) => {
+                        try {
+                            // Panggil backend kita sendiri dengan param group_by
+                            const res = await fetch(`/api/stats?start_date=${pStart}&end_date=${pEnd}&group_by=${groupBy}`);
+                            if(!res.ok) throw new Error(`Server Error (${groupBy})`);
+                            const json = await res.json();
+                            
+                            if(json.status === 'error') throw new Error(json.error);
+                            
+                            // Urutkan data berdasarkan revenue tertinggi
+                            let items = json.items || [];
+                            if(groupBy !== 'date') {
+                                items.sort((a, b) => b.revenue - a.revenue);
+                            }
+                            this.data[targetKey] = items;
+                        } catch (e) {
+                            console.error(e);
+                            this.errorMessage = `Gagal memuat data ${groupBy}. Cek koneksi atau API Key.`;
+                        } finally {
+                            this.loading[targetKey] = false;
+                        }
+                    };
+
+                    // Eksekusi paralel
+                    Promise.all([
+                        fetchData('date', 'date'),
+                        fetchData('placement', 'placement'),
+                        fetchData('country', 'country')
+                    ]);
                 },
 
+                // Formatters
                 formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); },
                 formatNumber(val) { return new Intl.NumberFormat('en-US').format(val); },
-                formatDecimal(val) { return parseFloat(val).toFixed(2); }
+                formatCompact(val) { return new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(val); }
             }
         }
     </script>
