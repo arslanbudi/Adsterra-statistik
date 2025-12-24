@@ -17,6 +17,7 @@
         .search-input { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(148, 163, 184, 0.2); color: #fff; font-size: 0.8rem; }
         .search-input:focus { outline: none; border-color: #3b82f6; }
         [x-cloak] { display: none !important; }
+        .debug-area { font-family: monospace; font-size: 10px; color: #33ff00; background: #000; padding: 10px; margin-top: 20px; overflow-x: auto; }
     </style>
 </head>
 <body class="min-h-screen p-4 lg:p-8" x-data="dashboardApp()">
@@ -27,10 +28,12 @@
             <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">TOKe ULTIMATE</h1>
             <p class="text-slate-500 text-xs tracking-widest mt-1">ADVANCED ANALYTICS SYSTEM</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2">
             <template x-for="d in [1, 7, 30]">
                 <button @click="setRange(d)" :class="range === d ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
+            <!-- Tombol Debug -->
+            <button @click="showDebug = !showDebug" class="ml-2 px-2 py-2 text-xs text-slate-600 hover:text-red-400 border border-slate-700 rounded" title="Lihat Data Mentah">🛠️</button>
         </div>
     </header>
 
@@ -138,6 +141,15 @@
         </div>
     </div>
 
+    <!-- RAW DATA DEBUGGER (Hanya muncul jika tombol 🛠️ diklik) -->
+    <div x-show="showDebug" class="max-w-7xl mx-auto mb-8 panel p-4">
+        <h3 class="text-xs font-bold text-red-400 mb-2">RAW DATA INSPECTOR (Kirim screenshot ini jika data masih 0)</h3>
+        <p class="text-[10px] text-slate-400 mb-2">Sampel data Placement:</p>
+        <pre class="debug-area" x-text="JSON.stringify(data.placement.slice(0, 2), null, 2)"></pre>
+        <p class="text-[10px] text-slate-400 mb-2 mt-2">Sampel data Country:</p>
+        <pre class="debug-area" x-text="JSON.stringify(data.country.slice(0, 2), null, 2)"></pre>
+    </div>
+
     <!-- MODAL DETAIL -->
     <div x-show="detailModal.open" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div x-show="detailModal.open" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm transition-opacity" @click="detailModal.open = false"></div>
@@ -177,26 +189,42 @@
     <script>
         function dashboardApp() {
             return {
-                range: 1, // Default ke 1 Hari (Today)
+                range: 1, // Default Today
                 loading: { placement: false },
                 errorMessage: null,
+                showDebug: false, // Default hidden
                 searchQuery: '',
                 data: { date: [], placement: [], country: [] },
                 placementMap: {},
                 detailModal: { open: false, loading: false, title: '', data: [], stats: { revenue: 0, impressions: 0, cpm: 0 } },
 
-                // FUNGSI PEMBERSIH DATA (KUNCI PERBAIKAN NAN)
-                // Memastikan semua string angka diubah jadi Number murni
-                cleanData(items) {
+                // --- CLEAN DATA (UNIVERSAL FIX) ---
+                // Fungsi ini mencari field ID dan Impressions di mana pun mereka bersembunyi
+                cleanData(items, type) {
                     if (!Array.isArray(items)) return [];
-                    return items.map(item => ({
-                        ...item,
-                        impressions: parseFloat(item.impressions) || 0,
-                        clicks: parseFloat(item.clicks) || 0,
-                        revenue: parseFloat(item.revenue) || 0,
-                        ctr: parseFloat(item.ctr) || 0,
-                        cpm: parseFloat(item.cpm) || 0
-                    }));
+                    return items.map(item => {
+                        // 1. CARI ID: Bisa bernama 'placement_id', 'id', atau 'placement'
+                        let finalId = item.placement_id || item.id || item.placement || 0;
+                        
+                        // 2. CARI IMPRESSIONS: Bisa 'impressions', 'imps', atau 'views'
+                        // Konversi string "123" atau number 123 menjadi number. Handle null/undefined jadi 0.
+                        let imp = parseFloat(item.impressions || item.imps || item.views || 0);
+                        let clk = parseFloat(item.clicks || 0);
+                        let rev = parseFloat(item.revenue || 0);
+
+                        return {
+                            ...item,
+                            // Standarisasi ID agar tabel tidak kosong
+                            placement_id: finalId, 
+                            
+                            // Standarisasi Angka
+                            impressions: imp,
+                            clicks: clk,
+                            revenue: rev,
+                            ctr: parseFloat(item.ctr || 0),
+                            cpm: parseFloat(item.cpm || 0)
+                        };
+                    });
                 },
 
                 get filteredPlacements() {
@@ -209,7 +237,6 @@
                     });
                 },
 
-                // Perbaikan Total Calculation (Menghindari NaN)
                 get totalRevenue() { return this.data.date.reduce((a, b) => a + (b.revenue || 0), 0); },
                 get totalImpressions() { return this.data.date.reduce((a, b) => a + (b.impressions || 0), 0); },
                 get totalClicks() { return this.data.date.reduce((a, b) => a + (b.clicks || 0), 0); },
@@ -219,7 +246,6 @@
                 setRange(d) { this.range = d; this.fetchAll(); },
 
                 getPlacementName(id) {
-                    // Paksa ID jadi string agar cocok dengan Key di Map
                     return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'Placement ' + id;
                 },
 
@@ -242,12 +268,12 @@
 
                         if (jsonDate.status === 'error') throw new Error(jsonDate.error);
 
-                        // BERSIHKAN DATA SEBELUM DISIMPAN
+                        // BERSIHKAN DATA
                         this.data.date = this.cleanData(jsonDate.items);
+                        // Sort placement by Revenue
                         this.data.placement = this.cleanData(jsonPlacement.items).sort((a,b) => b.revenue - a.revenue);
                         this.data.country = this.cleanData(jsonCountry.items).sort((a,b) => b.revenue - a.revenue);
 
-                        // Simpan Map (Pastikan key berupa String agar aman)
                         if(jsonMeta.items && Array.isArray(jsonMeta.items)) {
                             this.placementMap = jsonMeta.items.reduce((acc, item) => {
                                 acc[String(item.id)] = item.title; 
