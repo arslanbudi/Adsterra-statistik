@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEKTE TOKe - Pro Stats</title>
+    <title>SEKTE TOKe - Exact Name</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
@@ -21,7 +21,6 @@
     <style>
         body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
         
-        /* Input Styles */
         .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; display: block; }
         .ad-input { 
             width: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; 
@@ -32,7 +31,6 @@
         input[type="date"] { color-scheme: dark; }
         .ad-input:focus { outline: none; border-color: #ef4444; }
         
-        /* Group Buttons */
         .group-btn {
             background-color: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 20px; 
             font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
@@ -40,7 +38,6 @@
         .group-btn:hover { background-color: #334155; color: white; }
         .group-btn.active { background-color: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: #22c55e; z-index: 10; }
         
-        /* TABLE STYLING */
         table { width: 100%; border-collapse: collapse; }
         th { 
             text-align: right; padding: 12px 16px; font-size: 11px; font-weight: 700; 
@@ -51,11 +48,10 @@
             padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #1e293b; 
             color: #94a3b8; text-align: right; 
         }
-        /* Style khusus kolom Placement Name agar mirip Adsterra */
+        /* Style Nama Placement */
         td:first-child { 
             text-align: left; color: #f8fafc; font-weight: 500; 
-            white-space: normal; /* Allow wrap if too long */
-            word-break: break-word;
+            white-space: normal; word-break: break-word;
         }
         tr:hover td { background-color: #1e293b; }
 
@@ -64,16 +60,14 @@
 </head>
 <body class="min-h-screen p-6" x-data="dashboardApp()">
 
-    <!-- Header -->
     <div class="max-w-[1600px] mx-auto mb-8 flex items-center gap-3">
         <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white text-lg">S</div>
         <h1 class="text-xl font-bold text-white">SEKTE TOKe <span class="text-slate-500 font-normal text-sm ml-2">Pro Stats</span></h1>
     </div>
 
-    <!-- MAIN CONTAINER -->
     <div class="max-w-[1600px] mx-auto">
         
-        <!-- 1. FILTERS -->
+        <!-- FILTERS -->
         <div class="mb-10">
             <h2 class="text-base font-bold text-white mb-6 border-b border-slate-800 pb-2">Filters</h2>
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-6">
@@ -111,8 +105,7 @@
                     <select x-model="filters.placement" class="ad-input">
                         <option value="all">All Placements</option>
                         <template x-for="p in metadata.placements" :key="p.id">
-                            <!-- Dropdown juga menampilkan nama lengkap -->
-                            <option :value="p.id" x-text="formatPlacementLabel(p)"></option>
+                            <option :value="p.id" x-text="map.placements[p.id]"></option>
                         </template>
                     </select>
                 </div>
@@ -125,7 +118,7 @@
             </div>
         </div>
 
-        <!-- 2. GROUP BY -->
+        <!-- GROUP BY -->
         <div class="mb-8">
             <h2 class="text-sm font-bold text-white mb-4">Group by</h2>
             <div class="flex flex-wrap shadow-sm">
@@ -136,13 +129,12 @@
             </div>
         </div>
 
-        <!-- 3. TABLE -->
+        <!-- TABLE -->
         <div class="bg-[#151f32] border border-slate-700 rounded-lg overflow-hidden shadow-2xl min-h-[400px]">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
                         <tr>
-                            <!-- Lebar kolom pertama diperbesar agar nama placement muat -->
                             <th class="w-[45%]" x-text="getHeaderLabel()"></th>
                             <th>Impressions</th>
                             <th>Clicks</th>
@@ -161,7 +153,6 @@
                         <template x-for="row in tableData" :key="Math.random()">
                             <tr>
                                 <td>
-                                    <!-- Nama akan muncul panjang disini -->
                                     <div class="font-medium text-sm text-slate-200" x-text="getRowLabel(row)"></div>
                                 </td>
                                 <td x-text="formatNumber(row.impression)"></td>
@@ -229,6 +220,7 @@
                     this.fetchStats();
                 },
 
+                // --- 1. LOGIC METADATA (DIPERBAIKI) ---
                 async fetchMetadata() {
                     try {
                         const res = await fetch('/api/metadata');
@@ -236,23 +228,39 @@
                         this.metadata.domains = json.domains || [];
                         this.metadata.placements = json.placements || [];
                         
-                        // MAPPING NAMA PERSIS ADSTERRA: DOMAIN - TITLE - ID
-                        this.metadata.domains.forEach(d => this.map.domains[d.id] = d.name);
+                        // A. Buat Kamus Domain (ID -> Nama)
+                        // Adsterra Direct Link biasanya punya nama unik di sini, misal "direct-link-904962"
+                        let domainLookup = {};
+                        this.metadata.domains.forEach(d => {
+                            domainLookup[d.id] = d.name; // Contoh: { 904962: "direct-link-904962", 123: "blog.com" }
+                            this.map.domains[d.id] = d.name;
+                        });
                         
+                        // B. Buat Nama Placement Lengkap
+                        // Format: DomainName – PlacementTitle – PlacementID
                         this.metadata.placements.forEach(p => {
-                            // Format: DomainName - Title - ID
-                            // Jika domain object ada namanya, pakai itu. Jika tidak, "Direct Link"
-                            let domainName = p.domain || "Direct Link"; 
+                            // Cari nama domain induknya
+                            let domainName = "Unknown";
+                            
+                            // Cek jika API kasih object domain
+                            if (p.domain && p.domain.name) {
+                                domainName = p.domain.name;
+                            } 
+                            // Cek jika API kasih domain_id, lalu cari di kamus
+                            else if (p.domain_id && domainLookup[p.domain_id]) {
+                                domainName = domainLookup[p.domain_id];
+                            }
+                            // Fallback (jarang terjadi)
+                            else {
+                                domainName = "Direct Link";
+                            }
+
+                            // Format String Akhir: "direct-link-904962 – MoneyMachine – 27576072"
                             let fullLabel = `${domainName} – ${p.title} – ${p.id}`;
                             this.map.placements[p.id] = fullLabel;
                         });
-                    } catch(e) { console.error(e); }
-                },
 
-                // Helper khusus untuk format label di dropdown
-                formatPlacementLabel(p) {
-                    let domainName = p.domain || "Direct Link";
-                    return `${domainName} – ${p.title} – ${p.id}`;
+                    } catch(e) { console.error(e); }
                 },
 
                 async fetchStats() {
@@ -287,7 +295,6 @@
                         let cpm = p(item.cpm);
                         let imp = p(item.impression) || p(item.impressions) || p(item.imps);
                         
-                        // Math Fallback Fix 0 Impressi
                         if (imp === 0 && cpm > 0 && rev > 0) {
                             imp = Math.round((rev / cpm) * 1000);
                         }
@@ -299,11 +306,9 @@
                             revenue: rev,
                             ctr: p(item.ctr),
                             cpm: cpm,
-                            // Simpan ID original untuk mapping
+                            // Simpan ID asli untuk lookup
                             domain: item.domain,
-                            placement: item.placement || item.placement_id || item.id,
-                            country: item.country,
-                            date: item.date
+                            placement: item.placement || item.placement_id || item.id
                         };
                     });
                 },
@@ -317,8 +322,6 @@
                     this.filters.country = 'all';
                     this.filters.domain = 'all';
                     this.filters.placement = 'all';
-                    this.filters.start = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
-                    this.filters.end = new Date().toISOString().split('T')[0];
                     this.fetchStats();
                 },
 
@@ -332,8 +335,8 @@
                     if (this.groupBy === 'domain') return this.map.domains[row.domain] || row.domain;
                     
                     if (this.groupBy === 'placement') {
-                        // Return nama lengkap yang sudah di-mapping: Domain - Title - ID
-                        let id = row.placement || row.placement_id;
+                        let id = row.placement;
+                        // Ambil nama lengkap yang sudah kita susun di fetchMetadata
                         return this.map.placements[id] || 'ID: ' + id;
                     }
                     return '-';
