@@ -19,67 +19,44 @@
         }
     </script>
     <style>
-        /* GLOBAL DARK MODE FIX */
         body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
         
-        /* Form Elements Style - FULL DARK */
+        /* Input Styles */
         .ad-label { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; display: block; }
-        
         .ad-input { 
-            width: 100%; 
-            background-color: #1e293b; 
-            border: 1px solid #334155; 
-            color: #f1f5f9; 
-            border-radius: 4px; 
-            padding: 10px 12px; 
-            font-size: 13px; 
-            appearance: none; /* Hapus panah default browser */
+            width: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; 
+            border-radius: 4px; padding: 10px 12px; font-size: 13px; appearance: none; 
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
         }
-        
-        /* Fix Input Date Icon Color */
-        input[type="date"] {
-            color-scheme: dark;
-        }
-        
+        input[type="date"] { color-scheme: dark; }
         .ad-input:focus { outline: none; border-color: #ef4444; }
         
-        /* Tombol Group By */
+        /* Group Buttons */
         .group-btn {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            color: #94a3b8;
-            padding: 8px 20px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
+            background-color: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 20px; 
+            font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
         }
         .group-btn:hover { background-color: #334155; color: white; }
-        .group-btn.active { 
-            background-color: rgba(34, 197, 94, 0.1); 
-            color: #4ade80; 
-            border-color: #22c55e; 
-            z-index: 10;
-        }
+        .group-btn.active { background-color: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: #22c55e; z-index: 10; }
         
         /* TABLE STYLING */
         table { width: 100%; border-collapse: collapse; }
         th { 
-            text-align: right; padding: 12px 16px; 
-            font-size: 11px; font-weight: 700; text-transform: uppercase; 
-            color: #cbd5e1; border-bottom: 2px solid #334155; 
+            text-align: right; padding: 12px 16px; font-size: 11px; font-weight: 700; 
+            text-transform: uppercase; color: #cbd5e1; border-bottom: 2px solid #334155; 
         }
         th:first-child { text-align: left; }
         td { 
-            padding: 14px 16px; font-size: 13px; 
-            border-bottom: 1px solid #1e293b; color: #94a3b8; text-align: right; 
+            padding: 14px 16px; font-size: 13px; border-bottom: 1px solid #1e293b; 
+            color: #94a3b8; text-align: right; 
         }
-        td:first-child { text-align: left; color: #f8fafc; font-weight: 500; }
+        /* Style khusus kolom Placement Name agar mirip Adsterra */
+        td:first-child { 
+            text-align: left; color: #f8fafc; font-weight: 500; 
+            white-space: normal; /* Allow wrap if too long */
+            word-break: break-word;
+        }
         tr:hover td { background-color: #1e293b; }
 
         [x-cloak] { display: none !important; }
@@ -96,10 +73,9 @@
     <!-- MAIN CONTAINER -->
     <div class="max-w-[1600px] mx-auto">
         
-        <!-- 1. FILTERS (Layout Renggang & Lebar) -->
+        <!-- 1. FILTERS -->
         <div class="mb-10">
             <h2 class="text-base font-bold text-white mb-6 border-b border-slate-800 pb-2">Filters</h2>
-            
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-6">
                 <!-- Date -->
                 <div>
@@ -109,7 +85,6 @@
                         <input type="date" x-model="filters.end" class="ad-input" style="background-image: none;">
                     </div>
                 </div>
-
                 <!-- Country -->
                 <div>
                     <label class="ad-label">Country</label>
@@ -120,7 +95,6 @@
                         </template>
                     </select>
                 </div>
-
                 <!-- Domain -->
                 <div>
                     <label class="ad-label">Domain *</label>
@@ -131,14 +105,14 @@
                         </template>
                     </select>
                 </div>
-
                 <!-- Placement -->
                 <div>
                     <label class="ad-label">Placement</label>
                     <select x-model="filters.placement" class="ad-input">
                         <option value="all">All Placements</option>
                         <template x-for="p in metadata.placements" :key="p.id">
-                            <option :value="p.id" x-text="p.title"></option>
+                            <!-- Dropdown juga menampilkan nama lengkap -->
+                            <option :value="p.id" x-text="formatPlacementLabel(p)"></option>
                         </template>
                     </select>
                 </div>
@@ -146,12 +120,8 @@
 
             <!-- Buttons -->
             <div class="flex items-center gap-4">
-                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded text-xs font-bold uppercase tracking-wide shadow transition">
-                    APPLY
-                </button>
-                <button @click="resetFilters" class="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wide transition">
-                    RESET
-                </button>
+                <button @click="fetchStats" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-2.5 rounded text-xs font-bold uppercase tracking-wide shadow transition">APPLY</button>
+                <button @click="resetFilters" class="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wide transition">RESET</button>
             </div>
         </div>
 
@@ -172,7 +142,8 @@
                 <table class="w-full">
                     <thead>
                         <tr>
-                            <th class="w-1/3" x-text="getHeaderLabel()"></th>
+                            <!-- Lebar kolom pertama diperbesar agar nama placement muat -->
+                            <th class="w-[45%]" x-text="getHeaderLabel()"></th>
                             <th>Impressions</th>
                             <th>Clicks</th>
                             <th>CTR</th>
@@ -180,19 +151,18 @@
                             <th style="color: #4ade80;">Revenue</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Loading -->
+                    <tbody class="divide-y divide-slate-800">
                         <tr x-show="loading">
                             <td colspan="6" class="text-center py-16">
                                 <div class="inline-block animate-spin w-6 h-6 border-2 border-slate-500 border-t-white rounded-full"></div>
                             </td>
                         </tr>
 
-                        <!-- Data -->
                         <template x-for="row in tableData" :key="Math.random()">
                             <tr>
                                 <td>
-                                    <div class="font-medium text-slate-200" x-text="getRowLabel(row)"></div>
+                                    <!-- Nama akan muncul panjang disini -->
+                                    <div class="font-medium text-sm text-slate-200" x-text="getRowLabel(row)"></div>
                                 </td>
                                 <td x-text="formatNumber(row.impression)"></td>
                                 <td x-text="formatNumber(row.clicks)"></td>
@@ -202,14 +172,10 @@
                             </tr>
                         </template>
 
-                        <!-- Empty -->
                         <tr x-show="!loading && tableData.length === 0">
-                            <td colspan="6" class="text-center py-16 text-slate-500 text-sm">
-                                No data available for selected filters.
-                            </td>
+                            <td colspan="6" class="text-center py-16 text-slate-500 text-sm">No data available for selected filters.</td>
                         </tr>
 
-                        <!-- Total Footer -->
                         <tr x-show="tableData.length > 0" class="bg-slate-800 font-bold border-t-2 border-slate-600">
                             <td class="text-white">Total:</td>
                             <td class="text-white" x-text="formatNumber(totals.impression)"></td>
@@ -222,7 +188,6 @@
                 </table>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -243,8 +208,7 @@
                 tableData: [],
                 metadata: { domains: [], placements: [] },
                 map: { domains: {}, placements: {} },
-                
-                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU", "MY", "SG"],
+                countryList: ["US", "ID", "IN", "BR", "VN", "TH", "PH", "DE", "GB", "CA", "AU", "MY", "SG", "NG"],
 
                 get totals() {
                     return this.tableData.reduce((acc, row) => {
@@ -272,9 +236,23 @@
                         this.metadata.domains = json.domains || [];
                         this.metadata.placements = json.placements || [];
                         
+                        // MAPPING NAMA PERSIS ADSTERRA: DOMAIN - TITLE - ID
                         this.metadata.domains.forEach(d => this.map.domains[d.id] = d.name);
-                        this.metadata.placements.forEach(p => this.map.placements[p.id] = p.title);
+                        
+                        this.metadata.placements.forEach(p => {
+                            // Format: DomainName - Title - ID
+                            // Jika domain object ada namanya, pakai itu. Jika tidak, "Direct Link"
+                            let domainName = p.domain || "Direct Link"; 
+                            let fullLabel = `${domainName} – ${p.title} – ${p.id}`;
+                            this.map.placements[p.id] = fullLabel;
+                        });
                     } catch(e) { console.error(e); }
+                },
+
+                // Helper khusus untuk format label di dropdown
+                formatPlacementLabel(p) {
+                    let domainName = p.domain || "Direct Link";
+                    return `${domainName} – ${p.title} – ${p.id}`;
                 },
 
                 async fetchStats() {
@@ -293,13 +271,10 @@
 
                     try {
                         const res = await fetch(`/api/stats?${params.toString()}`);
-                        // Handle Empty JSON gracefully
                         const json = await res.json();
-                        const items = json.items || [];
-                        this.tableData = this.cleanData(items);
+                        this.tableData = this.cleanData(json.items || []);
                     } catch(e) {
-                        // Silent fail for empty data
-                        this.tableData = [];
+                        this.errorMessage = e.message;
                     } finally {
                         this.loading = false;
                     }
@@ -308,7 +283,6 @@
                 cleanData(items) {
                     return items.map(item => {
                         const p = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g,'')) : (v || 0);
-                        
                         let rev = p(item.revenue);
                         let cpm = p(item.cpm);
                         let imp = p(item.impression) || p(item.impressions) || p(item.imps);
@@ -324,7 +298,12 @@
                             clicks: p(item.clicks),
                             revenue: rev,
                             ctr: p(item.ctr),
-                            cpm: cpm
+                            cpm: cpm,
+                            // Simpan ID original untuk mapping
+                            domain: item.domain,
+                            placement: item.placement || item.placement_id || item.id,
+                            country: item.country,
+                            date: item.date
                         };
                     });
                 },
@@ -351,7 +330,12 @@
                     if (this.groupBy === 'date') return row.date;
                     if (this.groupBy === 'country') return row.country;
                     if (this.groupBy === 'domain') return this.map.domains[row.domain] || row.domain;
-                    if (this.groupBy === 'placement') return this.map.placements[row.placement] || row.placement || row.placement_id;
+                    
+                    if (this.groupBy === 'placement') {
+                        // Return nama lengkap yang sudah di-mapping: Domain - Title - ID
+                        let id = row.placement || row.placement_id;
+                        return this.map.placements[id] || 'ID: ' + id;
+                    }
                     return '-';
                 },
 
