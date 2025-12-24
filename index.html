@@ -3,148 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKe Ultimate - Fixed Analytics</title>
+    <title>TOKe Ultimate - Full Stats</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { background-color: #0F172A; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0F172A; color: #E2E8F0; font-family: 'Inter', system-ui, sans-serif; }
         .panel { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.1); backdrop-filter: blur(12px); border-radius: 0.75rem; }
-        .th-cell { @apply px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right; }
-        .td-cell { @apply px-4 py-3 text-sm border-t border-slate-700/50 text-right; }
-        .scroll-custom::-webkit-scrollbar { width: 6px; }
+        
+        /* Table Styling */
+        .th-cell { @apply px-3 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right whitespace-nowrap; }
+        .td-cell { @apply px-3 py-3 text-xs border-t border-slate-700/50 text-right whitespace-nowrap; }
+        
+        /* Scrollbars */
+        .scroll-custom::-webkit-scrollbar { width: 6px; height: 6px; }
         .scroll-custom::-webkit-scrollbar-track { background: #1e293b; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        
         .search-input { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(148, 163, 184, 0.2); color: #fff; font-size: 0.8rem; }
         .search-input:focus { outline: none; border-color: #3b82f6; }
         [x-cloak] { display: none !important; }
-        
-        /* Animasi Dropdown */
-        .dropdown-enter { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; max-height: 500px; opacity: 1; }
-        .dropdown-leave { transition: max-height 0.2s ease-in, opacity 0.2s ease-in; max-height: 0; opacity: 0; overflow: hidden; }
     </style>
 </head>
-<body class="min-h-screen p-4 lg:p-8" x-data="dashboardApp()">
+<body class="min-h-screen p-2 md:p-6" x-data="dashboardApp()">
 
     <!-- Header -->
-    <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+    <header class="max-w-[1400px] mx-auto mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">TOKe ULTIMATE</h1>
-            <p class="text-slate-500 text-xs tracking-widest mt-1">ADVANCED ANALYTICS SYSTEM</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">TOKe ULTIMATE</h1>
+            <p class="text-slate-500 text-[10px] tracking-[0.2em] mt-1">COMPLETE STATISTICS SUITE</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             <template x-for="d in [1, 7, 30]">
-                <button @click="setRange(d)" :class="range === d ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
+                <button @click="setRange(d)" :class="range === d ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'" class="px-4 py-1.5 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
             </template>
-            <!-- Tombol Debug Data Mentah -->
-            <button @click="showDebug = !showDebug" class="ml-2 px-3 py-2 text-xs bg-slate-800 text-slate-400 hover:text-white border border-slate-700 rounded transition" title="Cek Data JSON">🛠️ Debug</button>
         </div>
     </header>
 
     <!-- Error Alert -->
-    <div x-show="errorMessage" class="max-w-7xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded flex items-center gap-3">
+    <div x-show="errorMessage" class="max-w-[1400px] mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded flex items-center gap-3">
         <span x-text="errorMessage" class="text-sm font-mono"></span>
     </div>
 
-    <!-- KPI Grid (Total Atas) -->
-    <section class="max-w-7xl mx-auto mb-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="panel p-5 border-l-4 border-emerald-500">
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Revenue</div>
-            <div class="text-3xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
+    <!-- KPI Summary -->
+    <section class="max-w-[1400px] mx-auto mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="panel p-4 border-l-4 border-emerald-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
         </div>
-        <div class="panel p-5 border-l-4 border-blue-500">
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Impressions</div>
+        <div class="panel p-4 border-l-4 border-blue-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Impressions</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalImpressions)"></div>
         </div>
-        <div class="panel p-5 border-l-4 border-purple-500">
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Clicks</div>
+        <div class="panel p-4 border-l-4 border-purple-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Clicks</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalClicks)"></div>
         </div>
-        <div class="panel p-5 border-l-4 border-yellow-500">
-            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Avg CPM</div>
+        <div class="panel p-4 border-l-4 border-yellow-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Average CPM</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(avgCPM)"></div>
         </div>
     </section>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Main Table Layout -->
+    <div class="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-3 gap-6">
         
-        <!-- Placement Table (ACCORDION STYLE) -->
-        <div class="panel h-[700px] flex flex-col">
-            <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <!-- KOLOM KIRI: PLACEMENTS (Lebar 2/3) -->
+        <div class="xl:col-span-2 panel h-[800px] flex flex-col">
+            <div class="px-5 py-3 bg-slate-800/40 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div class="flex items-center gap-2">
-                    <h3 class="font-bold text-cyan-400 text-sm tracking-wide">TOP PLACEMENTS</h3>
+                    <h3 class="font-bold text-cyan-400 text-sm tracking-wide">PLACEMENT PERFORMANCE</h3>
                     <span x-show="loading.placement" class="text-[10px] text-blue-400 animate-pulse">Syncing...</span>
                 </div>
-                <div class="relative w-full sm:w-48">
-                    <input type="text" x-model="searchQuery" placeholder="Cari nama / ID..." class="search-input w-full px-3 py-1.5 rounded-md focus:ring-1 focus:ring-blue-500 transition-all">
-                </div>
+                <input type="text" x-model="searchQuery" placeholder="Filter placement..." class="search-input w-full sm:w-56 px-3 py-1.5 rounded-md">
             </div>
 
             <div class="overflow-auto flex-1 scroll-custom">
                 <table class="w-full border-collapse">
-                    <thead class="bg-slate-900/80 sticky top-0 backdrop-blur-sm z-10">
+                    <thead class="bg-slate-900/90 sticky top-0 z-10">
                         <tr>
-                            <th class="th-cell text-left pl-6">Placement</th>
-                            <th class="th-cell">Impr</th>
+                            <th class="th-cell text-left pl-5">Placement Name</th>
+                            <th class="th-cell text-slate-300">Impr</th>
+                            <th class="th-cell text-slate-300">Clicks</th>
+                            <th class="th-cell text-blue-400">CTR</th>
+                            <th class="th-cell text-yellow-500">CPM</th>
                             <th class="th-cell text-emerald-400">Rev</th>
-                            <th class="w-8"></th>
+                            <th class="w-6"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-700/50">
                         <template x-for="item in filteredPlacements" :key="item.placement_id">
-                            <!-- Menggunakan Fragment Alpine -->
                             <template x-data="{ expanded: false }">
-                                <tbody class="group hover:bg-slate-700/30 transition-colors border-b border-slate-800">
-                                    <!-- Baris Utama -->
-                                    <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer">
-                                        <td class="px-6 py-3 text-sm text-left align-middle">
-                                            <!-- Logic Nama: Domain + Title -->
-                                            <div class="font-bold text-slate-200 text-xs md:text-sm truncate max-w-[180px]" 
-                                                 x-text="getPlacementName(item.placement_id)"></div>
-                                            <div class="text-[10px] text-slate-500 font-mono mt-0.5" x-text="'ID: ' + item.placement_id"></div>
+                                <tbody class="group border-b border-slate-800">
+                                    <!-- Parent Row -->
+                                    <tr @click="expanded = !expanded; if(expanded) loadDetail(item)" class="cursor-pointer hover:bg-slate-700/30 transition-colors">
+                                        <td class="px-5 py-3 text-xs text-left align-middle max-w-[200px] sm:max-w-xs truncate">
+                                            <div class="font-bold text-slate-200" x-text="getPlacementName(item.placement_id)"></div>
+                                            <div class="text-[10px] text-slate-500 font-mono" x-text="item.placement_id"></div>
                                         </td>
-                                        <td class="td-cell text-slate-400" x-text="formatNumber(item.impressions)"></td>
-                                        <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
-                                        <td class="px-2 text-slate-500 text-xs">
-                                            <span x-show="!expanded">▼</span>
-                                            <span x-show="expanded" class="text-blue-400">▲</span>
+                                        <td class="td-cell text-slate-300" x-text="formatNumber(item.impressions)"></td>
+                                        <td class="td-cell text-slate-400" x-text="formatNumber(item.clicks)"></td>
+                                        <td class="td-cell text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></td>
+                                        <td class="td-cell text-yellow-600" x-text="formatCurrency(item.cpm)"></td>
+                                        <td class="td-cell font-bold text-emerald-400 text-sm" x-text="formatCurrency(item.revenue)"></td>
+                                        <td class="px-2 text-center text-xs text-slate-600">
+                                            <span x-show="!expanded">▼</span><span x-show="expanded" class="text-blue-500">▲</span>
                                         </td>
                                     </tr>
 
-                                    <!-- Baris Dropdown (Detail Negara) -->
-                                    <tr x-show="expanded" x-transition class="bg-slate-900/50 shadow-inner">
-                                        <td colspan="4" class="p-0">
-                                            <div class="p-4 border-l-4 border-blue-500 ml-4 my-2 rounded bg-slate-800/50">
+                                    <!-- Dropdown Details -->
+                                    <tr x-show="expanded" class="bg-slate-900/40">
+                                        <td colspan="7" class="p-0">
+                                            <div class="border-l-2 border-blue-500 m-2 ml-6 bg-slate-800/40 rounded p-2">
+                                                <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-4 text-xs text-slate-500">Memuat data negara...</div>
                                                 
-                                                <!-- Loading State Dropdown -->
-                                                <div x-show="isLoadingDetail(item.placement_id)" class="text-center py-4 text-xs text-blue-400">
-                                                    <span class="animate-spin inline-block mr-2">⟳</span> Memuat detail negara...
-                                                </div>
-
-                                                <!-- Data Table Dropdown -->
                                                 <div x-show="!isLoadingDetail(item.placement_id)">
-                                                     <h4 class="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-wider">Breakdown by Country</h4>
-                                                     <table class="w-full text-xs">
+                                                    <table class="w-full text-xs">
                                                         <thead>
-                                                            <tr class="text-slate-500 border-b border-slate-700">
-                                                                <th class="text-left py-1">Country</th>
-                                                                <th class="text-right py-1">Imp</th>
-                                                                <th class="text-right py-1">Rev</th>
+                                                            <tr class="text-slate-500 border-b border-slate-700/50">
+                                                                <th class="text-left py-2 pl-2">Country</th>
+                                                                <th class="text-right py-2">Imp</th>
+                                                                <th class="text-right py-2">Clicks</th>
+                                                                <th class="text-right py-2">CTR</th>
+                                                                <th class="text-right py-2">CPM</th>
+                                                                <th class="text-right py-2 pr-2">Rev</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <template x-for="c in getDetailData(item.placement_id)" :key="c.country">
-                                                                <tr class="border-b border-slate-700/30 hover:bg-slate-700/50">
-                                                                    <td class="py-2 font-bold text-slate-300" x-text="c.country"></td>
+                                                                <tr class="hover:bg-slate-700/50 border-b border-slate-700/30 last:border-0">
+                                                                    <td class="py-2 pl-2 font-bold text-white" x-text="c.country"></td>
                                                                     <td class="py-2 text-right text-slate-400" x-text="formatNumber(c.impressions)"></td>
-                                                                    <td class="py-2 text-right text-emerald-400 font-bold" x-text="formatCurrency(c.revenue)"></td>
+                                                                    <td class="py-2 text-right text-slate-500" x-text="formatNumber(c.clicks)"></td>
+                                                                    <td class="py-2 text-right text-blue-400" x-text="c.ctr.toFixed(2)+'%'"></td>
+                                                                    <td class="py-2 text-right text-yellow-600" x-text="formatCurrency(c.cpm)"></td>
+                                                                    <td class="py-2 pr-2 text-right font-bold text-emerald-400" x-text="formatCurrency(c.revenue)"></td>
                                                                 </tr>
                                                             </template>
-                                                            <tr x-show="getDetailData(item.placement_id).length === 0">
-                                                                <td colspan="3" class="py-2 text-center text-slate-500">No data</td>
-                                                            </tr>
+                                                             <tr x-show="getDetailData(item.placement_id).length === 0"><td colspan="6" class="py-2 text-center text-slate-500">No data</td></tr>
                                                         </tbody>
-                                                     </table>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </td>
@@ -152,22 +149,21 @@
                                 </tbody>
                             </template>
                         </template>
-                        <tr x-show="filteredPlacements.length === 0 && !loading.placement"><td colspan="4" class="p-8 text-center text-slate-500 text-xs">Data tidak ditemukan.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Country Table (Global) -->
-        <div class="panel h-[700px] flex flex-col">
-            <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex justify-between items-center">
-                <h3 class="font-bold text-purple-400 text-sm tracking-wide">TOP COUNTRIES (GLOBAL)</h3>
+        <!-- KOLOM KANAN: GLOBAL COUNTRY (Lebar 1/3) -->
+        <div class="xl:col-span-1 panel h-[800px] flex flex-col">
+            <div class="px-5 py-3 bg-slate-800/40 border-b border-slate-700">
+                <h3 class="font-bold text-purple-400 text-sm tracking-wide">GLOBAL TOP COUNTRIES</h3>
             </div>
             <div class="overflow-auto flex-1 scroll-custom">
                 <table class="w-full">
-                    <thead class="bg-slate-900/80 sticky top-0 backdrop-blur-sm z-10">
+                    <thead class="bg-slate-900/90 sticky top-0 z-10">
                         <tr>
-                            <th class="th-cell text-left pl-6">Country</th>
+                            <th class="th-cell text-left pl-5">Country</th>
                             <th class="th-cell">Impr</th>
                             <th class="th-cell">CTR</th>
                             <th class="th-cell text-emerald-400">Rev</th>
@@ -176,9 +172,9 @@
                     <tbody class="divide-y divide-slate-700/50">
                         <template x-for="item in data.country" :key="item.country">
                             <tr class="hover:bg-slate-700/30 transition-colors">
-                                <td class="px-6 py-3 text-sm text-left font-bold text-slate-200" x-text="item.country"></td>
+                                <td class="px-5 py-3 text-xs font-bold text-slate-200" x-text="item.country"></td>
                                 <td class="td-cell text-slate-400" x-text="formatNumber(item.impressions)"></td>
-                                <td class="td-cell text-blue-400" x-text="formatDecimal(item.ctr) + '%'"></td>
+                                <td class="td-cell text-blue-400" x-text="item.ctr.toFixed(2) + '%'"></td>
                                 <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
                             </tr>
                         </template>
@@ -186,59 +182,47 @@
                 </table>
             </div>
         </div>
-    </div>
 
-    <!-- DEBUG RAW DATA -->
-    <div x-show="showDebug" class="max-w-7xl mx-auto mt-4 p-4 panel text-xs font-mono">
-        <h3 class="text-red-400 font-bold mb-2">RAW DATA INSPECTOR</h3>
-        <p class="text-slate-500 mb-1">Cek apakah field 'impressions' ada, atau bernama lain (imps, views)?</p>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <p class="text-cyan-400">Placement Data (Sample):</p>
-                <pre class="bg-black p-2 rounded text-green-400 overflow-auto h-40" x-text="JSON.stringify(data.placement.slice(0,1), null, 2)"></pre>
-            </div>
-            <div>
-                <p class="text-purple-400">Country Data (Sample):</p>
-                <pre class="bg-black p-2 rounded text-green-400 overflow-auto h-40" x-text="JSON.stringify(data.country.slice(0,1), null, 2)"></pre>
-            </div>
-        </div>
     </div>
 
     <script>
         function dashboardApp() {
             return {
-                range: 1, 
+                range: 1, // Default Today
                 loading: { placement: false },
                 errorMessage: null,
-                showDebug: false,
                 searchQuery: '',
                 
-                // Data Store
                 data: { date: [], placement: [], country: [] },
                 placementMap: {},
-                
-                // Store untuk Dropdown Detail (Cache)
                 details: {}, 
                 loadingDetails: {},
 
-                // --- FUNGSI CLEANING DATA (FIX 0 IMPRESSIONS) ---
+                // Fungsi Pembersih Data (Master Cleaner)
                 cleanData(items) {
                     if (!Array.isArray(items)) return [];
                     return items.map(item => {
-                        // 1. FIX ID: Ambil dari placement_id, id, atau placement
+                        // Mapping ID
                         let finalId = item.placement_id || item.id || item.placement || 0;
                         
-                        // 2. FIX IMPRESSIONS: Cek semua kemungkinan nama kolom dari API Adsterra
-                        let rawImp = item.impressions || item.imps || item.views || item.requests || 0;
+                        // Mapping Impressions (Coba berbagai kemungkinan key)
+                        // Adsterra API kadang pakai 'impressions', 'imps', 'views'
+                        let imp = parseFloat(item.impressions || item.imps || item.views || 0);
+                        let clk = parseFloat(item.clicks || 0);
+                        let rev = parseFloat(item.revenue || 0);
                         
+                        // Hitung Manual jika API 0 tapi ada clicks (mencegah NaN)
+                        let ctr = parseFloat(item.ctr || 0);
+                        let cpm = parseFloat(item.cpm || 0);
+
                         return {
                             ...item,
                             placement_id: finalId,
-                            impressions: parseFloat(rawImp), // Pastikan jadi angka
-                            clicks: parseFloat(item.clicks || 0),
-                            revenue: parseFloat(item.revenue || 0),
-                            ctr: parseFloat(item.ctr || 0),
-                            cpm: parseFloat(item.cpm || 0)
+                            impressions: imp,
+                            clicks: clk,
+                            revenue: rev,
+                            ctr: ctr,
+                            cpm: cpm
                         };
                     });
                 },
@@ -253,23 +237,22 @@
                     });
                 },
 
-                get totalRevenue() { return this.data.date.reduce((a, b) => a + (b.revenue || 0), 0); },
-                get totalImpressions() { return this.data.date.reduce((a, b) => a + (b.impressions || 0), 0); },
-                get totalClicks() { return this.data.date.reduce((a, b) => a + (b.clicks || 0), 0); },
+                get totalRevenue() { return this.data.date.reduce((a, b) => a + b.revenue, 0); },
+                get totalImpressions() { return this.data.date.reduce((a, b) => a + b.impressions, 0); },
+                get totalClicks() { return this.data.date.reduce((a, b) => a + b.clicks, 0); },
                 get avgCPM() { return this.totalImpressions > 0 ? (this.totalRevenue / this.totalImpressions * 1000) : 0; },
 
                 init() { this.fetchAll(); },
                 setRange(d) { this.range = d; this.fetchAll(); },
 
                 getPlacementName(id) {
-                    // Coba ambil dari Map. Jika tidak ada, return ID
-                    return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'ID: ' + id;
+                    return this.placementMap[String(id)] || this.placementMap[Number(id)] || 'Placement ' + id;
                 },
 
                 async fetchAll() {
                     this.errorMessage = null;
                     this.loading.placement = true;
-                    this.details = {}; // Reset cache dropdown saat refresh total
+                    this.details = {}; 
                     const {start, end} = this.getDateParams();
 
                     try {
@@ -286,20 +269,17 @@
 
                         if (jsonDate.status === 'error') throw new Error(jsonDate.error);
 
-                        // BERSIHKAN DATA
                         this.data.date = this.cleanData(jsonDate.items);
                         this.data.placement = this.cleanData(jsonPlacement.items).sort((a,b) => b.revenue - a.revenue);
                         this.data.country = this.cleanData(jsonCountry.items).sort((a,b) => b.revenue - a.revenue);
 
-                        // MAPPING NAMA PLACEMENT LEBIH LENGKAP
+                        // Mapping Nama Placement (Domain + Title)
                         if(jsonMeta.items && Array.isArray(jsonMeta.items)) {
                             this.placementMap = jsonMeta.items.reduce((acc, item) => {
-                                // GABUNGKAN DOMAIN + TITLE (Contoh: google.com - 300x250)
-                                let fullName = item.title;
-                                if(item.domain) fullName = `${item.domain} - ${item.title}`;
-                                else if (item.url) fullName = `${item.url} - ${item.title}`;
-                                
-                                acc[String(item.id)] = fullName;
+                                let label = item.title;
+                                if(item.domain) label = `${item.domain} - ${item.title}`;
+                                else if(item.url) label = `${item.url} - ${item.title}`;
+                                acc[String(item.id)] = label;
                                 return acc;
                             }, {});
                         }
@@ -310,28 +290,20 @@
                     }
                 },
 
-                // --- LOGIC DROPDOWN DETAIL ---
-                isLoadingDetail(id) {
-                    return this.loadingDetails[id] === true;
-                },
-
-                getDetailData(id) {
-                    return this.details[id] || [];
-                },
+                isLoadingDetail(id) { return this.loadingDetails[id] === true; },
+                getDetailData(id) { return this.details[id] || []; },
 
                 async loadDetail(item) {
                     const id = item.placement_id;
-                    // Jika data sudah ada di cache, jangan fetch lagi
                     if (this.details[id]) return;
 
                     this.loadingDetails[id] = true;
                     const {start, end} = this.getDateParams();
 
                     try {
+                        // Request detail negara untuk placement tertentu
                         const res = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=country&placement_id=${id}`);
                         const json = await res.json();
-                        
-                        // Bersihkan dan Simpan ke Cache
                         this.details[id] = this.cleanData(json.items).sort((a,b) => b.revenue - a.revenue);
                     } catch (e) {
                         console.error(e);
@@ -346,9 +318,8 @@
                     return { start, end };
                 },
 
-                formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0); },
-                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val || 0); },
-                formatDecimal(val) { return (val || 0).toFixed(2); }
+                formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); },
+                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val); }
             }
         }
     </script>
