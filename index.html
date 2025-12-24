@@ -3,67 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKe Ultimate - Debug Mode</title>
+    <title>TOKe Ultimate - Publisher Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { background-color: #0F172A; color: #E2E8F0; font-family: 'Inter', system-ui, sans-serif; }
-        .panel { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); backdrop-filter: blur(12px); border-radius: 0.75rem; }
-        .th-cell { @apply px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right; }
+        body { background-color: #0F172A; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .panel { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(148, 163, 184, 0.1); backdrop-filter: blur(12px); border-radius: 0.75rem; }
+        .th-cell { @apply px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right; }
         .td-cell { @apply px-4 py-3 text-sm border-t border-slate-700/50 text-right; }
+        .scroll-custom::-webkit-scrollbar { width: 6px; }
+        .scroll-custom::-webkit-scrollbar-track { background: #1e293b; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        /* Style untuk input search */
+        .search-input {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        .search-input:focus { outline: none; border-color: #3b82f6; }
     </style>
 </head>
 <body class="min-h-screen p-4 lg:p-8" x-data="dashboardApp()">
 
-    <header class="max-w-7xl mx-auto mb-8">
-        <h1 class="text-3xl font-bold text-cyan-400">TOKe ULTIMATE <span class="text-white text-sm bg-red-600 px-2 py-1 rounded ml-2">DEBUG MODE</span></h1>
-        <p class="text-slate-500 text-sm mt-1">Realtime Publisher Statistics</p>
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">TOKe ULTIMATE</h1>
+            <p class="text-slate-500 text-xs tracking-widest mt-1">ADVANCED ANALYTICS SYSTEM</p>
+        </div>
+        <div class="flex gap-2">
+            <template x-for="d in [1, 7, 30]">
+                <button @click="setRange(d)" :class="range === d ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-bold rounded transition-all" x-text="d === 1 ? 'TODAY' : d + ' DAYS'"></button>
+            </template>
+        </div>
     </header>
 
-    <!-- ERROR BOX (PENTING: Ini akan menampilkan pesan error asli) -->
-    <div x-show="errorMessage" class="max-w-7xl mx-auto mb-6 p-6 bg-red-900/50 border-2 border-red-500 text-white rounded-lg shadow-lg">
-        <h3 class="font-bold text-lg mb-2">⚠️ TERJADI ERROR:</h3>
-        <p class="font-mono text-sm bg-black/50 p-3 rounded" x-text="errorMessage"></p>
-        <p class="text-sm mt-2 text-red-200">Silakan kirim pesan error di atas kepada saya.</p>
+    <!-- Error Alert -->
+    <div x-show="errorMessage" class="max-w-7xl mx-auto mb-6 p-4 bg-red-900/40 border border-red-500/50 text-red-200 rounded flex items-center gap-3">
+        <span x-text="errorMessage" class="text-sm font-mono"></span>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- KPI Grid -->
     <section class="max-w-7xl mx-auto mb-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="panel p-5 border-l-4 border-emerald-500">
-            <div class="text-xs text-slate-400 uppercase">Total Revenue</div>
-            <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Revenue</div>
+            <div class="text-3xl font-bold text-white mt-1" x-text="formatCurrency(totalRevenue)"></div>
         </div>
         <div class="panel p-5 border-l-4 border-blue-500">
-            <div class="text-xs text-slate-400 uppercase">Impressions</div>
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Impressions</div>
             <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalImpressions)"></div>
+        </div>
+        <div class="panel p-5 border-l-4 border-purple-500">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Clicks</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatNumber(totalClicks)"></div>
+        </div>
+        <div class="panel p-5 border-l-4 border-yellow-500">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wide">Avg CPM</div>
+            <div class="text-2xl font-bold text-white mt-1" x-text="formatCurrency(avgCPM)"></div>
         </div>
     </section>
 
-    <!-- Tables -->
+    <!-- Main Content -->
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Placement -->
-        <div class="panel h-[500px] flex flex-col">
-            <div class="px-6 py-4 bg-slate-800/30 border-b border-slate-700 font-bold text-cyan-400">BY PLACEMENT</div>
-            <div class="overflow-auto flex-1">
+        
+        <!-- Placement Table dengan FILTER SEARCH -->
+        <div class="panel h-[600px] flex flex-col">
+            <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-cyan-400 text-sm tracking-wide">TOP PLACEMENTS</h3>
+                    <span x-show="loading.placement" class="text-[10px] text-blue-400 animate-pulse">Syncing...</span>
+                </div>
+                
+                <!-- INPUT SEARCH BARU -->
+                <div class="relative w-full sm:w-48">
+                    <input type="text" x-model="searchQuery" placeholder="Cari nama / ID..." class="search-input w-full px-3 py-1.5 rounded-md focus:ring-1 focus:ring-blue-500 transition-all">
+                    <div class="absolute right-2 top-1.5 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-auto flex-1 scroll-custom">
                 <table class="w-full">
-                    <thead class="bg-slate-900/50 sticky top-0"><tr><th class="th-cell text-left">ID</th><th class="th-cell">Rev ($)</th></tr></thead>
-                    <tbody>
-                        <template x-for="item in data.placement" :key="item.placement_id">
-                            <tr><td class="td-cell text-left text-blue-300" x-text="item.placement_id"></td><td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td></tr>
+                    <thead class="bg-slate-900/80 sticky top-0 backdrop-blur-sm z-10">
+                        <tr>
+                            <th class="th-cell text-left pl-6">Placement Name</th>
+                            <th class="th-cell">Impr</th>
+                            <th class="th-cell text-emerald-400">Rev</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        <!-- Menggunakan filteredPlacements, bukan data.placement langsung -->
+                        <template x-for="item in filteredPlacements" :key="item.placement_id">
+                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                <td class="px-6 py-3 text-sm text-left align-middle">
+                                    <!-- Highlight Nama -->
+                                    <div class="font-medium text-slate-200 text-xs md:text-sm truncate max-w-[200px] md:max-w-xs" 
+                                         x-text="placementMap[item.placement_id] || 'ID: ' + item.placement_id"></div>
+                                    <div class="text-[10px] text-slate-500 font-mono mt-0.5" x-text="'ID: ' + item.placement_id"></div>
+                                </td>
+                                <td class="td-cell text-slate-400" x-text="formatCompact(item.impressions)"></td>
+                                <td class="td-cell font-bold text-emerald-400 group-hover:text-emerald-300" x-text="formatCurrency(item.revenue)"></td>
+                            </tr>
                         </template>
+                        
+                        <!-- Pesan jika tidak ada hasil pencarian -->
+                        <tr x-show="filteredPlacements.length === 0 && !loading.placement">
+                            <td colspan="3" class="p-8 text-center text-slate-500 text-xs">
+                                <span x-show="searchQuery">Tidak ditemukan placement dengan nama "<span x-text="searchQuery" class="text-white"></span>"</span>
+                                <span x-show="!searchQuery">Tidak ada data.</span>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <!-- Country -->
-        <div class="panel h-[500px] flex flex-col">
-            <div class="px-6 py-4 bg-slate-800/30 border-b border-slate-700 font-bold text-purple-400">BY COUNTRY</div>
-            <div class="overflow-auto flex-1">
+
+        <!-- Country Table -->
+        <div class="panel h-[600px] flex flex-col">
+            <div class="px-6 py-4 bg-slate-800/40 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-purple-400 text-sm tracking-wide">TOP COUNTRIES</h3>
+            </div>
+            <div class="overflow-auto flex-1 scroll-custom">
                 <table class="w-full">
-                    <thead class="bg-slate-900/50 sticky top-0"><tr><th class="th-cell text-left">Country</th><th class="th-cell">Rev ($)</th></tr></thead>
-                    <tbody>
+                    <thead class="bg-slate-900/80 sticky top-0 backdrop-blur-sm z-10">
+                        <tr>
+                            <th class="th-cell text-left pl-6">Country</th>
+                            <th class="th-cell">Impr</th>
+                            <th class="th-cell">CTR</th>
+                            <th class="th-cell text-emerald-400">Rev</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
                         <template x-for="item in data.country" :key="item.country">
-                            <tr><td class="td-cell text-left font-bold" x-text="item.country"></td><td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td></tr>
+                            <tr class="hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-3 text-sm text-left font-bold text-slate-200" x-text="item.country"></td>
+                                <td class="td-cell text-slate-400" x-text="formatCompact(item.impressions)"></td>
+                                <td class="td-cell text-blue-400" x-text="parseFloat(item.ctr).toFixed(2) + '%'"></td>
+                                <td class="td-cell font-bold text-emerald-400" x-text="formatCurrency(item.revenue)"></td>
+                            </tr>
                         </template>
                     </tbody>
                 </table>
@@ -74,52 +153,77 @@
     <script>
         function dashboardApp() {
             return {
-                data: { date: [], placement: [], country: [] },
+                range: 7,
+                loading: { placement: false },
                 errorMessage: null,
-                get totalRevenue() { return this.data.date.reduce((acc, cur) => acc + cur.revenue, 0); },
-                get totalImpressions() { return this.data.date.reduce((acc, cur) => acc + cur.impressions, 0); },
+                searchQuery: '', // Variable untuk menampung teks pencarian
+                data: { date: [], placement: [], country: [] },
+                placementMap: {},
+
+                // Filter Logic: Berjalan otomatis saat searchQuery berubah
+                get filteredPlacements() {
+                    if (this.searchQuery === '') return this.data.placement;
+                    
+                    const lowerQuery = this.searchQuery.toLowerCase();
+                    return this.data.placement.filter(item => {
+                        const name = (this.placementMap[item.placement_id] || '').toLowerCase();
+                        const id = String(item.placement_id);
+                        // Cari berdasarkan Nama ATAU ID
+                        return name.includes(lowerQuery) || id.includes(lowerQuery);
+                    });
+                },
+
+                get totalRevenue() { return this.data.date.reduce((a, b) => a + b.revenue, 0); },
+                get totalImpressions() { return this.data.date.reduce((a, b) => a + b.impressions, 0); },
+                get totalClicks() { return this.data.date.reduce((a, b) => a + b.clicks, 0); },
+                get avgCPM() { return this.totalImpressions > 0 ? (this.totalRevenue / this.totalImpressions * 1000) : 0; },
 
                 init() { this.fetchAll(); },
+                setRange(d) { this.range = d; this.fetchAll(); },
 
                 async fetchAll() {
                     this.errorMessage = null;
+                    this.loading.placement = true;
+                    
                     const end = new Date().toISOString().split('T')[0];
-                    const start = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
+                    const start = new Date(new Date().setDate(new Date().getDate() - this.range)).toISOString().split('T')[0];
 
-                    const fetchData = async (groupBy, targetKey) => {
-                        try {
-                            // Request ke backend
-                            const res = await fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=${groupBy}`);
-                            
-                            // Cek jika HTML yang kembali (bukan JSON) -> Tanda Salah Folder
-                            const contentType = res.headers.get("content-type");
-                            if (contentType && contentType.indexOf("application/json") === -1) {
-                                throw new Error("Server membalas dengan HTML, bukan JSON. Cek struktur folder 'functions/api/stats.js' di GitHub Anda.");
-                            }
+                    try {
+                        const [resDate, resPlacement, resCountry, resMeta] = await Promise.all([
+                            fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=date`),
+                            fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=placement`),
+                            fetch(`/api/stats?start_date=${start}&end_date=${end}&group_by=country`),
+                            fetch(`/api/placements`)
+                        ]);
 
-                            const json = await res.json();
+                        const [jsonDate, jsonPlacement, jsonCountry, jsonMeta] = await Promise.all([
+                            resDate.json(), resPlacement.json(), resCountry.json(), resMeta.json()
+                        ]);
 
-                            // Jika backend kirim sinyal error, tampilkan error aslinya!
-                            if (json.status === 'error') {
-                                throw new Error(`Server Error: ${json.error}`);
-                            }
-                            
-                            this.data[targetKey] = json.items || [];
-                        } catch (e) {
-                            console.error(e);
-                            // Tampilkan pesan error spesifik ke layar
-                            this.errorMessage = `Gagal pada ${groupBy}: ${e.message}`;
+                        if (jsonDate.status === 'error') throw new Error(jsonDate.error);
+
+                        this.data.date = jsonDate.items || [];
+                        this.data.placement = (jsonPlacement.items || []).sort((a,b) => b.revenue - a.revenue);
+                        this.data.country = (jsonCountry.items || []).sort((a,b) => b.revenue - a.revenue);
+
+                        if(jsonMeta.items && Array.isArray(jsonMeta.items)) {
+                            this.placementMap = jsonMeta.items.reduce((acc, item) => {
+                                acc[item.id] = item.title; 
+                                return acc;
+                            }, {});
                         }
-                    };
 
-                    // Jalankan Request
-                    fetchData('date', 'date');
-                    fetchData('placement', 'placement');
-                    fetchData('country', 'country');
+                    } catch (e) {
+                        console.error(e);
+                        this.errorMessage = "Gagal memuat data: " + e.message;
+                    } finally {
+                        this.loading.placement = false;
+                    }
                 },
 
                 formatCurrency(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); },
-                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val); }
+                formatNumber(val) { return new Intl.NumberFormat('en-US').format(val); },
+                formatCompact(val) { return new Intl.NumberFormat('en-US', { notation: "compact" }).format(val); }
             }
         }
     </script>
