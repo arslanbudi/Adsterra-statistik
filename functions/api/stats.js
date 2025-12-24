@@ -9,7 +9,6 @@ export async function onRequest(context) {
   const groupBy = url.searchParams.get("group_by") || "date";
   const placementId = url.searchParams.get("placement_id");
 
-  // Default Date
   let finalStart = startDate, finalFinish = endDate;
   if(!startDate || !endDate) {
       const end = new Date();
@@ -19,8 +18,8 @@ export async function onRequest(context) {
       finalStart = start.toISOString().split('T')[0];
   }
 
-  // UPDATE PENTING: Tambahkan &limit=2000 agar semua data muncul
-  let adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}&limit=2000`;
+  // PERBAIKAN: Hapus '&limit=2000' karena menyebabkan Error 500
+  let adsterraUrl = `https://api3.adsterratools.com/publisher/stats.json?start_date=${finalStart}&finish_date=${finalFinish}&group_by=${groupBy}`;
   
   if (placementId) {
       adsterraUrl += `&placement_ids=${placementId}`;
@@ -31,7 +30,11 @@ export async function onRequest(context) {
       headers: { "Accept": "application/json", "X-API-Key": API_KEY }
     });
     
-    if (!response.ok) throw new Error(await response.text());
+    // Jika masih error, kita tangkap pesan aslinya
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Adsterra Error (${response.status}): ${errText}`);
+    }
     
     const data = await response.json();
     return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
